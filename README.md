@@ -21,6 +21,20 @@ adding more complex features such as variables, functions, and scoping rules.
 - **Variables and Scoping**: Introduces variable bindings with lexical scoping.
 - **First-Class Functions**: Functions are treated as values that can be passed around.
 
+## Problems
+
+### Pros
+
+- I can create a prototype language in one afternoon.
+
+### Cons
+
+- I think less about the implementation.
+- The implementation is quiet naive.
+    - Parser is not modular enough.
+    - It's easy to forget fixing related functions when adding a new case.
+    - Binary operators are not implemented as infix functions.
+
 ## Getting Started
 
 ### Prerequisites
