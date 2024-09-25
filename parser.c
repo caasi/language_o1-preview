@@ -204,7 +204,9 @@ ASTNode *parse_comparison(Parser *parser) {
 
 ASTNode *parse_expression(Parser *parser)
 {
-    if (parser->current_token.type == TOKEN_KEYWORD_IF) {
+    if (parser->current_token.type == TOKEN_KEYWORD_LET) {
+        return parse_let_binding(parser);
+    } else if (parser->current_token.type == TOKEN_KEYWORD_IF) {
         return parse_if_expression(parser);
     } else {
         return parse_comparison(parser);

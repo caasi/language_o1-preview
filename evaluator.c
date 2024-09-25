@@ -115,7 +115,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         val->function.func_def = node;
         val->function.env = env; // Capture the environment (closure)
         // Store the function in the environment
-        env_define(env, node->function_def.name, val);
+        env_define(env, node->function_def.name, val, 1);
         return val;
     }
     else if (node->type == AST_FUNCTION_CALL)
@@ -150,7 +150,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
             // Evaluate argument
             Value *arg_val = evaluate(node->function_call.arguments[i], env, depth + 1);
             // Bind parameter to argument
-            env_define(func_env, func_def->function_def.parameters[i], arg_val);
+            env_define(func_env, func_def->function_def.parameters[i], arg_val, 1);
         }
 
         // Evaluate function body in the new environment
@@ -169,7 +169,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         Value *value = evaluate(node->let_binding.value, env, depth + 1);
 
         // Bind the variable
-        env_define(let_env, node->let_binding.name, value);
+        env_define(let_env, node->let_binding.name, value, 1);
 
         // Evaluate the body in the new environment
         Value *result = evaluate(node->let_binding.body, let_env, depth + 1);

@@ -27,14 +27,15 @@ typedef struct
 
 struct Env
 {
-    struct Env *parent; // Pointer to parent environment (for scoping)
     char **names;       // Array of variable names
     Value **values;     // Array of variable values (we'll define Value type)
+    int *is_owned;      // Array of ownership flags
     int count;          // Number of variables
+    struct Env *parent; // Pointer to parent environment (for scoping)
 };
 
 Env *env_create(Env *parent);
-void env_define(Env *env, const char *name, Value *value);
+void env_define(Env *env, const char *name, Value *value, int is_owned);
 Value *env_lookup(Env *env, const char *name);
 void env_destroy(Env *env);
 
