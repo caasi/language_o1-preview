@@ -35,12 +35,6 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         Value *left = evaluate(node->binop.left, env, depth + 1);
         Value *right = evaluate(node->binop.right, env, depth + 1);
 
-        if (left->type != VAL_NUMBER || right->type != VAL_NUMBER)
-        {
-            fprintf(stderr, "Error: Invalid operands for binary operation\n");
-            exit(EXIT_FAILURE);
-        }
-
         double result;
         int bool_result; // For comparisons
 
@@ -69,13 +63,20 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
             } else if (left->type == VAL_STRING && right->type == VAL_STRING) {
                 bool_result = (strcmp(left->string_value, right->string_value) == 0);
             } else {
-                fprintf(stderr, "Error: Invalid operands for comparison\n");
+                fprintf(stderr, "Error: Cannot compare different types with '=='\n");
                 exit(EXIT_FAILURE);
             }
             result = bool_result ? 1.0 : 0.0;
             break;
         case TOKEN_NOT_EQUAL:
-            bool_result = (left->number != right->number);
+            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER) {
+                bool_result = (left->number != right->number);
+            } else if (left->type == VAL_STRING && right->type == VAL_STRING) {
+                bool_result = (strcmp(left->string_value, right->string_value) != 0);
+            } else {
+                fprintf(stderr, "Error: Cannot compare different types with '!='\n");
+                exit(EXIT_FAILURE);
+            }
             result = bool_result ? 1.0 : 0.0;
             break;
         case TOKEN_LESS:
