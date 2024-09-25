@@ -32,7 +32,7 @@ int main()
     }
 
     // Print the AST for debugging
-    print_ast(ast, 0); // Start with an indentation level of 0
+    //print_ast(ast, 0); // Start with an indentation level of 0
 
     // Initialize the global environment
     Env *global_env = env_create(NULL);

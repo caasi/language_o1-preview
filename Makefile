@@ -34,10 +34,12 @@ $(TARGET): $(OBJS)
 # Include dependency files
 -include $(DEPS)
 
+test: all
+	./run_tests.sh
+
 # Clean up generated files
 clean:
 	rm -f $(OBJS) $(DEPS) $(TARGET)
 
 # Phony Targets
-
-.PHONY: all clean
+.PHONY: all test clean
