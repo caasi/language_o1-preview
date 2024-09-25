@@ -5,6 +5,7 @@
 typedef enum
 {
     VAL_NUMBER,
+    VAL_STRING,
     VAL_FUNCTION
 } ValueType;
 
@@ -17,6 +18,7 @@ typedef struct
     union
     {
         double number; // For VAL_NUMBER
+        char *string_value; // For VAL_STRING
         struct
         {                      // For VAL_FUNCTION
             ASTNode *func_def; // Function definition AST node

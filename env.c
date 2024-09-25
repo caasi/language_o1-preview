@@ -72,6 +72,9 @@ void free_value(Value *value)
     {
         // Free function-related data if needed
         // For simplicity, we might not need to free anything here
+    } else if (value->type == VAL_STRING)
+    {
+        free(value->string_value);
     }
 
     free(value);

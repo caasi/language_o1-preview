@@ -6,6 +6,7 @@
 typedef enum
 {
     AST_NUMBER,
+    AST_STRING,
     AST_BINOP,
     AST_VARIABLE,
     AST_FUNCTION_DEF,
@@ -21,6 +22,7 @@ typedef struct ASTNode
     union
     {
         double number; // For AST_NUMBER
+        char *string_value; // For AST_STRING
         struct
         {
             struct ASTNode *left;
@@ -70,6 +72,7 @@ Parser parser_create(Lexer lexer);
 void parser_eat(Parser *parser, TokenType token_type);
 
 ASTNode *parse_term(Parser *parser);
+ASTNode *parse_string(Parser *parser);
 ASTNode *parse_if_expression(Parser *parser);
 ASTNode *parse_multiplicative_expression(Parser *parser);
 ASTNode *parse_additive_expression(Parser *parser);

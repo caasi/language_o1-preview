@@ -24,6 +24,14 @@ void parser_eat(Parser *parser, TokenType token_type)
     }
 }
 
+ASTNode *parse_string(Parser *parser) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = AST_STRING;
+    node->string_value = strdup(parser->current_token.text);
+    parser_eat(parser, TOKEN_STRING);
+    return node;
+}
+
 ASTNode *parse_factor(Parser *parser)
 {
     Token token = parser->current_token;
@@ -36,6 +44,9 @@ ASTNode *parse_factor(Parser *parser)
         node->type = AST_NUMBER;
         node->number = token.value;
         return node;
+    }
+    else if (token.type == TOKEN_STRING) {
+        return parse_string(parser);
     }
     else if (token.type == TOKEN_LPAREN)
     {
@@ -243,6 +254,9 @@ void free_ast(ASTNode *node)
     {
     case AST_NUMBER:
         // Nothing to free
+        break;
+    case AST_STRING:
+        free(node->string_value);
         break;
     case AST_BINOP:
         free_ast(node->binop.left);

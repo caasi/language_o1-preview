@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "evaluator.h"
 #include "env.h"
 
@@ -21,6 +22,14 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         val->is_shared = 0; // Not shared, shoould be freed by evaluator
         return val;
     }
+    else if (node->type == AST_STRING)
+    {
+        Value *val = malloc(sizeof(Value));
+        val->type = VAL_STRING;
+        val->string_value = node->string_value;
+        val->is_shared = 1; // Shared, should not be freed by evaluator
+        return val;
+    }
     else if (node->type == AST_BINOP)
     {
         Value *left = evaluate(node->binop.left, env, depth + 1);
@@ -28,7 +37,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
 
         if (left->type != VAL_NUMBER || right->type != VAL_NUMBER)
         {
-            fprintf(stderr, "Error: Binary operation on non-number\n");
+            fprintf(stderr, "Error: Invalid operands for binary operation\n");
             exit(EXIT_FAILURE);
         }
 
@@ -55,7 +64,14 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
             result = left->number / right->number;
             break;
         case TOKEN_EQUAL_EQUAL:
-            bool_result = (left->number == right->number);
+            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER) {
+                bool_result = (left->number == right->number);
+            } else if (left->type == VAL_STRING && right->type == VAL_STRING) {
+                bool_result = (strcmp(left->string_value, right->string_value) == 0);
+            } else {
+                fprintf(stderr, "Error: Invalid operands for comparison\n");
+                exit(EXIT_FAILURE);
+            }
             result = bool_result ? 1.0 : 0.0;
             break;
         case TOKEN_NOT_EQUAL:

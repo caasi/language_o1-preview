@@ -60,6 +60,29 @@ Token lexer_get_number(Lexer *lexer)
     return token;
 }
 
+Token lexer_get_string(Lexer *lexer) {
+    lexer_advance(lexer); // Skip the opening quote
+
+    char buffer[1024]; // Adjust size as needed
+    int length = 0;
+
+    while (lexer->current_char != '"' && lexer->current_char != '\0') {
+        buffer[length++] = lexer->current_char;
+        lexer_advance(lexer);
+    }
+
+    if (lexer->current_char == '\0') {
+        fprintf(stderr, "Error: Unterminated string literal\n");
+        exit(EXIT_FAILURE);
+    }
+
+    buffer[length] = '\0';
+    lexer_advance(lexer); // Skip the closing quote
+
+    // Return the string token
+    return (Token){TOKEN_STRING, 0, strdup(buffer)};
+}
+
 Token lexer_get_next_token(Lexer *lexer)
 {
     while (lexer->current_char != '\0')
@@ -72,6 +95,9 @@ Token lexer_get_next_token(Lexer *lexer)
         if (isdigit(lexer->current_char) || lexer->current_char == '.')
         {
             return lexer_get_number(lexer);
+        }
+        if (lexer->current_char == '"') {
+            return lexer_get_string(lexer);
         }
         if (lexer->current_char == '+')
         {
