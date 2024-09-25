@@ -14,7 +14,9 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         exit(EXIT_FAILURE);
     }
 
-    if (node->type == AST_NUMBER)
+    switch (node->type)
+    {
+    case AST_NUMBER:
     {
         Value *val = malloc(sizeof(Value));
         val->type = VAL_NUMBER;
@@ -22,7 +24,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         val->is_shared = 0; // Not shared, shoould be freed by evaluator
         return val;
     }
-    else if (node->type == AST_STRING)
+    case AST_STRING:
     {
         Value *val = malloc(sizeof(Value));
         val->type = VAL_STRING;
@@ -30,7 +32,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         val->is_shared = 1; // Shared, should not be freed by evaluator
         return val;
     }
-    else if (node->type == AST_BINOP)
+    case AST_BINOP:
     {
         Value *left = evaluate(node->binop.left, env, depth + 1);
         Value *right = evaluate(node->binop.right, env, depth + 1);
@@ -58,22 +60,32 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
             result = left->number / right->number;
             break;
         case TOKEN_EQUAL_EQUAL:
-            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER) {
+            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER)
+            {
                 bool_result = (left->number == right->number);
-            } else if (left->type == VAL_STRING && right->type == VAL_STRING) {
+            }
+            else if (left->type == VAL_STRING && right->type == VAL_STRING)
+            {
                 bool_result = (strcmp(left->string_value, right->string_value) == 0);
-            } else {
+            }
+            else
+            {
                 fprintf(stderr, "Error: Cannot compare different types with '=='\n");
                 exit(EXIT_FAILURE);
             }
             result = bool_result ? 1.0 : 0.0;
             break;
         case TOKEN_NOT_EQUAL:
-            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER) {
+            if (left->type == VAL_NUMBER && right->type == VAL_NUMBER)
+            {
                 bool_result = (left->number != right->number);
-            } else if (left->type == VAL_STRING && right->type == VAL_STRING) {
+            }
+            else if (left->type == VAL_STRING && right->type == VAL_STRING)
+            {
                 bool_result = (strcmp(left->string_value, right->string_value) != 0);
-            } else {
+            }
+            else
+            {
                 fprintf(stderr, "Error: Cannot compare different types with '!='\n");
                 exit(EXIT_FAILURE);
             }
@@ -100,10 +112,12 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
             exit(EXIT_FAILURE);
         }
 
-        if (!left->is_shared) {
+        if (!left->is_shared)
+        {
             free_value(left);
         }
-        if (!right->is_shared) {
+        if (!right->is_shared)
+        {
             free_value(right);
         }
 
@@ -113,7 +127,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         val->is_shared = 0; // Not shared
         return val;
     }
-    else if (node->type == AST_VARIABLE)
+    case AST_VARIABLE:
     {
         // Look up the variable in the environment
         Value *val = env_lookup(env, node->name);
@@ -124,7 +138,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         }
         return val;
     }
-    else if (node->type == AST_FUNCTION_DEF)
+    case AST_FUNCTION_DEF:
     {
         // Create a function value
         Value *val = malloc(sizeof(Value));
@@ -135,7 +149,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         env_define(env, node->function_def.name, val, 1);
         return val;
     }
-    else if (node->type == AST_FUNCTION_CALL)
+    case AST_FUNCTION_CALL:
     {
         // Evaluate the function call
         Value *func_val = env_lookup(env, node->function_call.name);
@@ -177,7 +191,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         env_destroy(func_env);
         return result;
     }
-    else if (node->type == AST_LET_BINDING)
+    case AST_LET_BINDING:
     {
         // Create a new environment
         Env *let_env = env_create(env);
@@ -195,7 +209,7 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         env_destroy(let_env);
         return result;
     }
-    else if (node->type == AST_STATEMENT_LIST)
+    case AST_STATEMENT_LIST:
     {
         Value *result = NULL;
         for (int i = 0; i < node->statement_list.statement_count; i++)
@@ -207,30 +221,35 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         }
         return result;
     }
-    else if (node->type == AST_IF_EXPR) {
+    case AST_IF_EXPR:
+    {
         Value *condition = evaluate(node->if_expr.condition, env, depth + 1);
 
-        if (condition->type != VAL_NUMBER) {
+        if (condition->type != VAL_NUMBER)
+        {
             fprintf(stderr, "Error: Condition must be a number\n");
             exit(EXIT_FAILURE);
         }
 
         Value *result;
-        if (condition->number != 0) {
+        if (condition->number != 0)
+        {
             // Evaluate then branch
             result = evaluate(node->if_expr.then_branch, env, depth + 1);
-        } else {
+        }
+        else
+        {
             // Evaluate else branch
             result = evaluate(node->if_expr.else_branch, env, depth + 1);
         }
 
         // Free condition if necessary
-        if (!condition->is_shared) free_value(condition);
+        if (!condition->is_shared)
+            free_value(condition);
 
         return result;
     }
-    else
-    {
+    default:
         fprintf(stderr, "Error: Unknown AST node type '%d'\n", node->type);
         exit(EXIT_FAILURE);
     }
