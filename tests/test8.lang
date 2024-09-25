@@ -1,0 +1,2 @@
+fun get_magic_number = 42;
+get_magic_number();

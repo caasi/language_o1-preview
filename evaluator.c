@@ -114,9 +114,14 @@ Value *evaluate(ASTNode *node, Env *env)
     {
         // Evaluate the function call
         Value *func_val = env_lookup(env, node->function_call.name);
-        if (func_val == NULL || func_val->type != VAL_FUNCTION)
+        if (func_val == NULL)
         {
             fprintf(stderr, "Error: Undefined function '%s'\n", node->function_call.name);
+            exit(EXIT_FAILURE);
+        }
+        if (func_val->type != VAL_FUNCTION)
+        {
+            fprintf(stderr, "Error: '%s' is not a function\n", node->function_call.name);
             exit(EXIT_FAILURE);
         }
 
@@ -127,7 +132,7 @@ Value *evaluate(ASTNode *node, Env *env)
         ASTNode *func_def = func_val->function.func_def;
         if (func_def->function_def.param_count != node->function_call.arg_count)
         {
-            fprintf(stderr, "Error: Function '%s' expected %d arguments but got %d\n",
+            fprintf(stderr, "Error: Function '%s' expects %d arguments but got %d\n",
                     node->function_call.name, func_def->function_def.param_count, node->function_call.arg_count);
             exit(EXIT_FAILURE);
         }

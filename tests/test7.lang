@@ -1,0 +1,5 @@
+let numerator = 10 in
+let denominator = 5 - 5 in
+    numerator / denominator
+end
+end;
