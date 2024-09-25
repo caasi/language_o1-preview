@@ -2,7 +2,8 @@
 #define EVALUATOR_H
 
 #include "parser.h"
+#include "env.h"
 
-double evaluate(ASTNode *node);
+Value *evaluate(ASTNode *node, Env *env);
 
 #endif // EVALUATOR_H

@@ -16,6 +16,10 @@ adding more complex features such as variables, functions, and scoping rules.
 - **Parentheses**: Allows grouping expressions using parentheses.
 - **Abstract Syntax Tree (AST)**: Parses expressions into an AST for evaluation.
 - **Lexer and Parser**: Implements a lexer to tokenize the input and a parser to build the AST.
+- **Function Definitions**: Supports defining functions in the style of Standard ML (SML).
+- **Function Applications**: Allows calling functions with arguments.
+- **Variables and Scoping**: Introduces variable bindings with lexical scoping.
+- **First-Class Functions**: Functions are treated as values that can be passed around.
 
 ## Getting Started
 
