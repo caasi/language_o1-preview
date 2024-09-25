@@ -14,8 +14,8 @@ Lexer lexer_create(const char *text)
 }
 
 char lexer_peek(Lexer *lexer) {
-    if (lexer->pos < strlen(lexer->text)) {
-        return lexer->text[lexer->pos];
+    if (lexer->pos + 1 < strlen(lexer->text)) {
+        return lexer->text[lexer->pos + 1];
     } else {
         return '\0';
     }
@@ -24,7 +24,14 @@ char lexer_peek(Lexer *lexer) {
 void lexer_advance(Lexer *lexer)
 {
     lexer->pos++;
-    lexer->current_char = lexer->text[lexer->pos];
+    if (lexer->pos < strlen(lexer->text))
+    {
+        lexer->current_char = lexer->text[lexer->pos];
+    }
+    else
+    {
+        lexer->current_char = '\0';
+    }
 }
 
 void lexer_skip_whitespace(Lexer *lexer)
