@@ -1,0 +1,14 @@
+{
+    "tasks": [
+        {
+            "label": "make all",
+            "type": "shell",
+            "command": "make all",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
