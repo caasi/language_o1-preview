@@ -13,6 +13,9 @@ Env *env_create(Env *parent)
 
 void env_define(Env *env, const char *name, Value *value)
 {
+    // Mark the value as shared
+    value->is_shared = 1;
+
     env->names = realloc(env->names, sizeof(char *) * (env->count + 1));
     env->values = realloc(env->values, sizeof(Value *) * (env->count + 1));
     env->names[env->count] = strdup(name);
@@ -53,6 +56,11 @@ void free_value(Value *value)
 {
     if (value == NULL)
         return;
+
+    if (value->is_shared) {
+        // Do not free shared values
+        return;
+    }
 
     if (value->type == VAL_FUNCTION)
     {

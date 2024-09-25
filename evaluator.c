@@ -10,6 +10,7 @@ Value *evaluate(ASTNode *node, Env *env)
         Value *val = malloc(sizeof(Value));
         val->type = VAL_NUMBER;
         val->number = node->number;
+        val->is_shared = 0; // Not shared, shoould be freed by evaluator
         return val;
     }
     else if (node->type == AST_BINOP)
@@ -48,12 +49,17 @@ Value *evaluate(ASTNode *node, Env *env)
             exit(EXIT_FAILURE);
         }
 
-        free(left);
-        free(right);
+        if (!left->is_shared) {
+            free_value(left);
+        }
+        if (!right->is_shared) {
+            free_value(right);
+        }
 
         Value *val = malloc(sizeof(Value));
         val->type = VAL_NUMBER;
         val->number = result;
+        val->is_shared = 0; // Not shared
         return val;
     }
     else if (node->type == AST_VARIABLE)
@@ -145,6 +151,7 @@ Value *evaluate(ASTNode *node, Env *env)
             if (result != NULL)
             {
                 free(result);
+                result = NULL;
             }
             result = stmt_result;
             // Note: The result of the last statement is returned

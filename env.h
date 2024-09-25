@@ -13,6 +13,7 @@ typedef struct Env Env;
 typedef struct
 {
     ValueType type;
+    int is_shared; // 1 if the value is shared and should not be freed
     union
     {
         double number; // For VAL_NUMBER
