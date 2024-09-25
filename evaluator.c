@@ -3,8 +3,16 @@
 #include "evaluator.h"
 #include "env.h"
 
-Value *evaluate(ASTNode *node, Env *env)
+#define MAX_RECURSION_DEPTH 1000
+
+Value *evaluate(ASTNode *node, Env *env, int depth)
 {
+    if (depth > MAX_RECURSION_DEPTH)
+    {
+        fprintf(stderr, "Error: Stack overflow due to infinite recursion\n");
+        exit(EXIT_FAILURE);
+    }
+
     if (node->type == AST_NUMBER)
     {
         Value *val = malloc(sizeof(Value));
@@ -15,8 +23,8 @@ Value *evaluate(ASTNode *node, Env *env)
     }
     else if (node->type == AST_BINOP)
     {
-        Value *left = evaluate(node->binop.left, env);
-        Value *right = evaluate(node->binop.right, env);
+        Value *left = evaluate(node->binop.left, env, depth + 1);
+        Value *right = evaluate(node->binop.right, env, depth + 1);
 
         if (left->type != VAL_NUMBER || right->type != VAL_NUMBER)
         {
@@ -140,13 +148,13 @@ Value *evaluate(ASTNode *node, Env *env)
         for (int i = 0; i < func_def->function_def.param_count; i++)
         {
             // Evaluate argument
-            Value *arg_val = evaluate(node->function_call.arguments[i], env);
+            Value *arg_val = evaluate(node->function_call.arguments[i], env, depth + 1);
             // Bind parameter to argument
             env_define(func_env, func_def->function_def.parameters[i], arg_val);
         }
 
         // Evaluate function body in the new environment
-        Value *result = evaluate(func_def->function_def.body, func_env);
+        Value *result = evaluate(func_def->function_def.body, func_env, depth + 1);
 
         // Clean up
         env_destroy(func_env);
@@ -158,13 +166,13 @@ Value *evaluate(ASTNode *node, Env *env)
         Env *let_env = env_create(env);
 
         // Evaluate the value
-        Value *value = evaluate(node->let_binding.value, env);
+        Value *value = evaluate(node->let_binding.value, env, depth + 1);
 
         // Bind the variable
         env_define(let_env, node->let_binding.name, value);
 
         // Evaluate the body in the new environment
-        Value *result = evaluate(node->let_binding.body, let_env);
+        Value *result = evaluate(node->let_binding.body, let_env, depth + 1);
 
         // Clean up
         env_destroy(let_env);
@@ -177,13 +185,13 @@ Value *evaluate(ASTNode *node, Env *env)
         {
             ASTNode *stmt = node->statement_list.statements[i];
             // Evaluate each statement
-            result = evaluate(stmt, env);
+            result = evaluate(stmt, env, depth + 1);
             // The environment should not be modified here
         }
         return result;
     }
     else if (node->type == AST_IF_EXPR) {
-        Value *condition = evaluate(node->if_expr.condition, env);
+        Value *condition = evaluate(node->if_expr.condition, env, depth + 1);
 
         if (condition->type != VAL_NUMBER) {
             fprintf(stderr, "Error: Condition must be a number\n");
@@ -193,10 +201,10 @@ Value *evaluate(ASTNode *node, Env *env)
         Value *result;
         if (condition->number != 0) {
             // Evaluate then branch
-            result = evaluate(node->if_expr.then_branch, env);
+            result = evaluate(node->if_expr.then_branch, env, depth + 1);
         } else {
             // Evaluate else branch
-            result = evaluate(node->if_expr.else_branch, env);
+            result = evaluate(node->if_expr.else_branch, env, depth + 1);
         }
 
         // Free condition if necessary

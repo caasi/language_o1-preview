@@ -38,7 +38,7 @@ int main()
     Env *global_env = env_create(NULL);
 
     // Evaluate the AST
-    Value *result = evaluate(ast, global_env);
+    Value *result = evaluate(ast, global_env, 0);
 
     // Output the result if it's a number
     if (result->type == VAL_NUMBER)
