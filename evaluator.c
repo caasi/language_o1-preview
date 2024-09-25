@@ -146,15 +146,8 @@ Value *evaluate(ASTNode *node, Env *env)
         {
             ASTNode *stmt = node->statement_list.statements[i];
             // Evaluate each statement
-            Value *stmt_result = evaluate(stmt, env);
-            // Free the previous result if needed
-            if (result != NULL)
-            {
-                free(result);
-                result = NULL;
-            }
-            result = stmt_result;
-            // Note: The result of the last statement is returned
+            result = evaluate(stmt, env);
+            // The environment should not be modified here
         }
         return result;
     }
