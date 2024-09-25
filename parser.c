@@ -204,13 +204,34 @@ ASTNode *parse_comparison(Parser *parser) {
 
 ASTNode *parse_expression(Parser *parser)
 {
+    ASTNode *node;
+
     if (parser->current_token.type == TOKEN_KEYWORD_LET) {
-        return parse_let_binding(parser);
+        node = parse_let_binding(parser);
     } else if (parser->current_token.type == TOKEN_KEYWORD_IF) {
-        return parse_if_expression(parser);
+        node = parse_if_expression(parser);
     } else {
-        return parse_comparison(parser);
+        node = parse_comparison(parser);
     }
+
+    // Handle additional expressions (e.g., '+ x') after the initial expression
+    while (parser->current_token.type == TOKEN_PLUS ||
+           parser->current_token.type == TOKEN_MINUS) {
+        TokenType op = parser->current_token.type;
+        parser_eat(parser, op);
+
+        ASTNode *right = parse_expression(parser);
+
+        ASTNode *new_node = malloc(sizeof(ASTNode));
+        new_node->type = AST_BINOP;
+        new_node->binop.left = node;
+        new_node->binop.op = op;
+        new_node->binop.right = right;
+
+        node = new_node;
+    }
+
+    return node;
 }
 
 void free_ast(ASTNode *node)
