@@ -4,6 +4,8 @@ In this project, I am going to create a small language with the help of OpenAI's
 o1-preview model. My goal is to change as little as possible and let the
 language model implement the language.
 
+You can check the conversation [here](https://chatgpt.com/share/66f3e88c-c714-8003-b36e-0220effd8bad).
+
 ## Overview
 
 This language is being developed step by step, starting from a simple calculator
