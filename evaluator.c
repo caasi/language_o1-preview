@@ -25,6 +25,8 @@ Value *evaluate(ASTNode *node, Env *env)
         }
 
         double result;
+        int bool_result; // For comparisons
+
         switch (node->binop.op)
         {
         case TOKEN_PLUS:
@@ -43,6 +45,30 @@ Value *evaluate(ASTNode *node, Env *env)
                 exit(EXIT_FAILURE);
             }
             result = left->number / right->number;
+            break;
+        case TOKEN_EQUAL_EQUAL:
+            bool_result = (left->number == right->number);
+            result = bool_result ? 1.0 : 0.0;
+            break;
+        case TOKEN_NOT_EQUAL:
+            bool_result = (left->number != right->number);
+            result = bool_result ? 1.0 : 0.0;
+            break;
+        case TOKEN_LESS:
+            bool_result = (left->number < right->number);
+            result = bool_result ? 1.0 : 0.0;
+            break;
+        case TOKEN_LESS_EQUAL:
+            bool_result = (left->number <= right->number);
+            result = bool_result ? 1.0 : 0.0;
+            break;
+        case TOKEN_GREATER:
+            bool_result = (left->number > right->number);
+            result = bool_result ? 1.0 : 0.0;
+            break;
+        case TOKEN_GREATER_EQUAL:
+            bool_result = (left->number >= right->number);
+            result = bool_result ? 1.0 : 0.0;
             break;
         default:
             fprintf(stderr, "Error: Unknown operator '%d'\n", node->binop.op);
@@ -149,6 +175,28 @@ Value *evaluate(ASTNode *node, Env *env)
             result = evaluate(stmt, env);
             // The environment should not be modified here
         }
+        return result;
+    }
+    else if (node->type == AST_IF_EXPR) {
+        Value *condition = evaluate(node->if_expr.condition, env);
+
+        if (condition->type != VAL_NUMBER) {
+            fprintf(stderr, "Error: Condition must be a number\n");
+            exit(EXIT_FAILURE);
+        }
+
+        Value *result;
+        if (condition->number != 0) {
+            // Evaluate then branch
+            result = evaluate(node->if_expr.then_branch, env);
+        } else {
+            // Evaluate else branch
+            result = evaluate(node->if_expr.else_branch, env);
+        }
+
+        // Free condition if necessary
+        if (!condition->is_shared) free_value(condition);
+
         return result;
     }
     else

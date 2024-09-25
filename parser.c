@@ -98,32 +98,117 @@ ASTNode *parse_term(Parser *parser)
     return node;
 }
 
-ASTNode *parse_expression(Parser *parser)
-{
-    ASTNode *node = parse_term(parser);
+ASTNode *parse_if_expression(Parser *parser) {
+    parser_eat(parser, TOKEN_KEYWORD_IF);
 
-    while (parser->current_token.type == TOKEN_PLUS || parser->current_token.type == TOKEN_MINUS)
-    {
-        Token token = parser->current_token;
-        if (token.type == TOKEN_PLUS)
-        {
-            parser_eat(parser, TOKEN_PLUS);
-        }
-        else if (token.type == TOKEN_MINUS)
-        {
-            parser_eat(parser, TOKEN_MINUS);
-        }
+    // Parse condition
+    ASTNode *condition = parse_comparison(parser);
 
+    // Expect 'then'
+    parser_eat(parser, TOKEN_KEYWORD_THEN);
+
+    // Parse 'then' branch
+    ASTNode *then_branch = parse_expression(parser);
+
+    // Expect 'else'
+    parser_eat(parser, TOKEN_KEYWORD_ELSE);
+
+    // Parse 'else' branch
+    ASTNode *else_branch = parse_expression(parser);
+
+    // Create if expression node
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = AST_IF_EXPR;
+    node->if_expr.condition = condition;
+    node->if_expr.then_branch = then_branch;
+    node->if_expr.else_branch = else_branch;
+
+    return node;
+}
+
+ASTNode *parse_multiplicative_expression(Parser *parser) {
+    ASTNode *node = parse_factor(parser);
+
+    while (parser->current_token.type == TOKEN_MUL ||
+           parser->current_token.type == TOKEN_DIV) {
+
+        TokenType op = parser->current_token.type;
+        parser_eat(parser, op);
+
+        ASTNode *right = parse_factor(parser);
+
+        // Create a binary operation node
         ASTNode *new_node = malloc(sizeof(ASTNode));
         new_node->type = AST_BINOP;
         new_node->binop.left = node;
-        new_node->binop.op = token.type;
-        new_node->binop.right = parse_term(parser);
+        new_node->binop.op = op;
+        new_node->binop.right = right;
 
         node = new_node;
     }
 
     return node;
+}
+
+ASTNode *parse_additive_expression(Parser *parser) {
+    ASTNode *node = parse_multiplicative_expression(parser);
+
+    while (parser->current_token.type == TOKEN_PLUS ||
+           parser->current_token.type == TOKEN_MINUS) {
+
+        TokenType op = parser->current_token.type;
+        parser_eat(parser, op);
+
+        ASTNode *right = parse_multiplicative_expression(parser);
+
+        // Create a binary operation node
+        ASTNode *new_node = malloc(sizeof(ASTNode));
+        new_node->type = AST_BINOP;
+        new_node->binop.left = node;
+        new_node->binop.op = op;
+        new_node->binop.right = right;
+
+        node = new_node;
+    }
+
+    return node;
+}
+
+ASTNode *parse_comparison(Parser *parser) {
+    ASTNode *node = parse_additive_expression(parser);
+
+    while (parser->current_token.type == TOKEN_EQUAL_EQUAL ||
+           parser->current_token.type == TOKEN_NOT_EQUAL ||
+           parser->current_token.type == TOKEN_LESS ||
+           parser->current_token.type == TOKEN_LESS_EQUAL ||
+           parser->current_token.type == TOKEN_GREATER ||
+           parser->current_token.type == TOKEN_GREATER_EQUAL) {
+
+        TokenType op = parser->current_token.type;
+        parser_eat(parser, op);
+
+        ASTNode *right = parse_additive_expression(parser);
+
+        // Create a binary operation node
+        ASTNode *new_node = malloc(sizeof(ASTNode));
+        new_node->type = AST_BINOP;
+        new_node->binop.left = node;
+        new_node->binop.op = op;
+        new_node->binop.right = right;
+
+        node = new_node;
+    }
+
+    return node;
+}
+
+ASTNode *parse_expression(Parser *parser)
+{
+    if (parser->current_token.type == TOKEN_KEYWORD_IF) {
+        return parse_if_expression(parser);
+    } else {
+        return parse_comparison(parser);
+    }
 }
 
 void free_ast(ASTNode *node)
@@ -171,6 +256,11 @@ void free_ast(ASTNode *node)
             free_ast(node->statement_list.statements[i]);
         }
         free(node->statement_list.statements);
+        break;
+    case AST_IF_EXPR:
+        free_ast(node->if_expr.condition);
+        free_ast(node->if_expr.then_branch);
+        free_ast(node->if_expr.else_branch);
         break;
     default:
         fprintf(stderr, "Error: Unknown AST node type '%d' in free_ast\n", node->type);
@@ -296,6 +386,20 @@ void print_ast(ASTNode *node, int indent)
         {
             print_ast(node->statement_list.statements[i], indent + 1);
         }
+        break;
+    }
+
+    case AST_IF_EXPR: {
+        printf("If Expression:\n");
+        for (int i = 0; i < indent + 1; i++) printf("  ");
+        printf("Condition:\n");
+        print_ast(node->if_expr.condition, indent + 2);
+        for (int i = 0; i < indent + 1; i++) printf("  ");
+        printf("Then Branch:\n");
+        print_ast(node->if_expr.then_branch, indent + 2);
+        for (int i = 0; i < indent + 1; i++) printf("  ");
+        printf("Else Branch:\n");
+        print_ast(node->if_expr.else_branch, indent + 2);
         break;
     }
 

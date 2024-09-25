@@ -13,6 +13,14 @@ Lexer lexer_create(const char *text)
     return lexer;
 }
 
+char lexer_peek(Lexer *lexer) {
+    if (lexer->pos < strlen(lexer->text)) {
+        return lexer->text[lexer->pos];
+    } else {
+        return '\0';
+    }
+}
+
 void lexer_advance(Lexer *lexer)
 {
     lexer->pos++;
@@ -129,8 +137,47 @@ Token lexer_get_next_token(Lexer *lexer)
         // Equal '='
         if (lexer->current_char == '=')
         {
-            lexer_advance(lexer);
-            return (Token){TOKEN_EQUAL, 0, NULL};
+            if (lexer_peek(lexer) == '=') {
+                lexer_advance(lexer); // Skip '='
+                lexer_advance(lexer); // Skip second '='
+                return (Token){TOKEN_EQUAL_EQUAL, 0, NULL};
+            } else {
+                lexer_advance(lexer);
+                return (Token){TOKEN_EQUAL, 0, NULL};
+            }
+        }
+
+        if (lexer->current_char == '!') {
+            if (lexer_peek(lexer) == '=') {
+                lexer_advance(lexer); // Skip '!'
+                lexer_advance(lexer); // Skip '='
+                return (Token){TOKEN_NOT_EQUAL, 0, NULL};
+            } else {
+                fprintf(stderr, "Error: Unexpected character '!'\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        if (lexer->current_char == '<') {
+            if (lexer_peek(lexer) == '=') {
+                lexer_advance(lexer); // Skip '<'
+                lexer_advance(lexer); // Skip '='
+                return (Token){TOKEN_LESS_EQUAL, 0, NULL};
+            } else {
+                lexer_advance(lexer);
+                return (Token){TOKEN_LESS, 0, NULL};
+            }
+        }
+
+        if (lexer->current_char == '>') {
+            if (lexer_peek(lexer) == '=') {
+                lexer_advance(lexer); // Skip '>'
+                lexer_advance(lexer); // Skip '='
+                return (Token){TOKEN_GREATER_EQUAL, 0, NULL};
+            } else {
+                lexer_advance(lexer);
+                return (Token){TOKEN_GREATER, 0, NULL};
+            }
         }
 
         fprintf(stderr, "Error: Unknown character '%c'\n", lexer->current_char);
@@ -173,6 +220,18 @@ Token lexer_get_identifier(Lexer *lexer)
     else if (strcmp(buffer, "end") == 0)
     {
         return (Token){TOKEN_KEYWORD_END, 0, NULL};
+    }
+    else if (strcmp(buffer, "if") == 0)
+    {
+        return (Token){TOKEN_KEYWORD_IF, 0, NULL};
+    }
+    else if (strcmp(buffer, "then") == 0)
+    {
+        return (Token){TOKEN_KEYWORD_THEN, 0, NULL};
+    }
+    else if (strcmp(buffer, "else") == 0)
+    {
+        return (Token){TOKEN_KEYWORD_ELSE, 0, NULL};
     }
     else
     {

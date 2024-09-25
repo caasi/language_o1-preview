@@ -17,6 +17,15 @@ typedef enum
     TOKEN_KEYWORD_LET,
     TOKEN_KEYWORD_IN,
     TOKEN_KEYWORD_END,
+    TOKEN_KEYWORD_IF,
+    TOKEN_KEYWORD_THEN,
+    TOKEN_KEYWORD_ELSE,
+    TOKEN_EQUAL_EQUAL, // '=='
+    TOKEN_NOT_EQUAL,   // '!='
+    TOKEN_LESS,        // '<'
+    TOKEN_LESS_EQUAL,  // '<='
+    TOKEN_GREATER,     // '>'
+    TOKEN_GREATER_EQUAL, // '>='
     TOKEN_ARROW,     // '->'
     TOKEN_COMMA,     // ','
     TOKEN_SEMICOLON, // ';'
@@ -39,6 +48,7 @@ typedef struct
 } Lexer;
 
 Lexer lexer_create(const char *text);
+char lexer_peek(Lexer *lexer);
 void lexer_advance(Lexer *lexer);
 void lexer_skip_whitespace(Lexer *lexer);
 Token lexer_get_number(Lexer *lexer);

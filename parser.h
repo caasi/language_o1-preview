@@ -11,7 +11,8 @@ typedef enum
     AST_FUNCTION_DEF,
     AST_FUNCTION_CALL,
     AST_LET_BINDING,
-    AST_STATEMENT_LIST
+    AST_STATEMENT_LIST,
+    AST_IF_EXPR,
 } ASTNodeType;
 
 typedef struct ASTNode
@@ -51,6 +52,11 @@ typedef struct ASTNode
             struct ASTNode **statements; // Array of statements
             int statement_count;         // Number of statements
         } statement_list;
+        struct { // AST_IF_EXPR
+            struct ASTNode *condition;
+            struct ASTNode *then_branch;
+            struct ASTNode *else_branch;
+        } if_expr;
     };
 } ASTNode;
 
@@ -63,8 +69,12 @@ typedef struct
 Parser parser_create(Lexer lexer);
 void parser_eat(Parser *parser, TokenType token_type);
 
-ASTNode *parse_expression(Parser *parser);
 ASTNode *parse_term(Parser *parser);
+ASTNode *parse_if_expression(Parser *parser);
+ASTNode *parse_multiplicative_expression(Parser *parser);
+ASTNode *parse_additive_expression(Parser *parser);
+ASTNode *parse_expression(Parser *parser);
+ASTNode *parse_comparison(Parser *parser);
 ASTNode *parse_factor(Parser *parser);
 ASTNode *parse_function_definition(Parser *parser);
 ASTNode *parse_function_application(Parser *parser, char *func_name);
