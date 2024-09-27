@@ -4,6 +4,83 @@
 #include <string.h>
 #include "lexer.h"
 
+const char *token_type_to_string(TokenType type)
+{
+    switch (type)
+    {
+    case TOKEN_NUMBER:
+        return "Number";
+    case TOKEN_STRING:
+        return "String";
+    case TOKEN_PLUS:
+        return "Plus";
+    case TOKEN_MINUS:
+        return "Minus";
+    case TOKEN_MUL:
+        return "Multiply";
+    case TOKEN_DIV:
+        return "Divide";
+    case TOKEN_LPAREN:
+        return "Left Parenthesis";
+    case TOKEN_RPAREN:
+        return "Right Parenthesis";
+    case TOKEN_IDENTIFIER:
+        return "Identifier";
+    case TOKEN_TYPE:
+        return "Type";
+    case TOKEN_PIPE:
+        return "Pipe";
+    case TOKEN_LBRACE:
+        return "Left Brace";
+    case TOKEN_RBRACE:
+        return "Right Brace";
+    case TOKEN_TYPE_NUMBER:
+        return "Number Type";
+    case TOKEN_TYPE_STRING:
+        return "String Type";
+    case TOKEN_TYPE_BOOL:
+        return "Bool Type";
+    case TOKEN_KEYWORD_FUN:
+        return "Function Keyword";
+    case TOKEN_KEYWORD_LET:
+        return "Let Keyword";
+    case TOKEN_KEYWORD_IN:
+        return "In Keyword";
+    case TOKEN_KEYWORD_END:
+        return "End Keyword";
+    case TOKEN_KEYWORD_IF:
+        return "If Keyword";
+    case TOKEN_KEYWORD_THEN:
+        return "Then Keyword";
+    case TOKEN_KEYWORD_ELSE:
+        return "Else Keyword";
+    case TOKEN_EQUAL_EQUAL:
+        return "Equal Equal";
+    case TOKEN_NOT_EQUAL:
+        return "Not Equal";
+    case TOKEN_LESS:
+        return "Less Than";
+    case TOKEN_LESS_EQUAL:
+        return "Less Than or Equal";
+    case TOKEN_GREATER:
+        return "Greater Than";
+    case TOKEN_GREATER_EQUAL:
+        return "Greater Than or Equal";
+    case TOKEN_ARROW:
+        return "Arrow";
+    case TOKEN_COMMA:
+        return "Comma";
+    case TOKEN_SEMICOLON:
+        return "Semicolon";
+    case TOKEN_EQUAL:
+        return "Equal";
+    case TOKEN_EOF:
+        return "End of File";
+    default:
+        return "Unknown token type";
+    }
+}
+
 Lexer lexer_create(const char *text)
 {
     Lexer lexer;

@@ -19,7 +19,9 @@ void parser_eat(Parser *parser, TokenType token_type)
     }
     else
     {
-        fprintf(stderr, "Error: Expected token type %d but got %d\n", token_type, parser->current_token.type);
+        const char *expected = token_type_to_string(token_type);
+        const char *got = token_type_to_string(parser->current_token.type);
+        fprintf(stderr, "Error: Expected token type '%s' but got '%s'\n", expected, got);
         exit(EXIT_FAILURE);
     }
 }
@@ -90,7 +92,8 @@ Type *parse_atomic_type(Parser *parser)
     }
     else
     {
-        fprintf(stderr, "Error: Unexpected token '%d' while parsing type\n", parser->current_token.type);
+        char *got = token_type_to_string(parser->current_token.type);
+        fprintf(stderr, "Error: Unexpected token '%s' while parsing type\n", got);
         exit(EXIT_FAILURE);
     }
 
@@ -192,7 +195,8 @@ ASTNode *parse_factor(Parser *parser)
     }
     else
     {
-        fprintf(stderr, "Error: Unexpected token '%d' in factor\n", token.type);
+        char *got = token_type_to_string(token.type);
+        fprintf(stderr, "Error: Unexpected token '%s' in factor\n", got);
         exit(EXIT_FAILURE);
     }
 }
@@ -920,7 +924,8 @@ ASTNode *parse_statement_list(Parser *parser)
         }
         else if (parser->current_token.type != TOKEN_EOF)
         {
-            fprintf(stderr, "Error: Expected ';' or end of input after statement, but got token type %d\n", parser->current_token.type);
+            char *got = token_type_to_string(parser->current_token.type);
+            fprintf(stderr, "Error: Expected ';' or end of input after statement, but got token type '%s'\n", got);
             print_ast(stmt, 0);
             exit(EXIT_FAILURE);
         }

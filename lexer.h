@@ -56,6 +56,8 @@ typedef struct
     char current_char;
 } Lexer;
 
+const char *token_type_to_string(TokenType type);
+
 Lexer lexer_create(const char *text);
 char lexer_peek(Lexer *lexer);
 void lexer_advance(Lexer *lexer);
