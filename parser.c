@@ -68,6 +68,7 @@ Type *parse_atomic_type(Parser *parser)
         if (parser->current_token.type == TOKEN_IDENTIFIER ||
             parser->current_token.type == TOKEN_TYPE_NUMBER ||
             parser->current_token.type == TOKEN_TYPE_STRING ||
+            parser->current_token.type == TOKEN_TYPE_BOOL ||
             parser->current_token.type == TOKEN_LPAREN) // Extend as needed
         {
             // Parse type parameters recursively
@@ -139,6 +140,73 @@ Type *parse_type(Parser *parser)
     }
 
     return left;
+}
+
+void free_type(Type *type)
+{
+    if (type == NULL)
+        return;
+
+    free(type->name);
+
+    // Free type parameters recursively
+    if (type->params)
+    {
+        for (int i = 0; i < type->param_count; i++)
+        {
+            free_type(type->params[i]);
+        }
+        free(type->params);
+    }
+
+    free(type);
+}
+
+void print_type(Type *type, int indent)
+{
+    if (type == NULL)
+        return;
+
+    // Print indentation spaces
+    for (int i = 0; i < indent; i++)
+    {
+        printf("  "); // Two spaces per indent level
+    }
+
+    // Print the type name
+    printf("%s", type->name);
+
+    // Print type parameters if any
+    if (type->param_count > 0)
+    {
+        printf(" [");
+        for (int i = 0; i < type->param_count; i++)
+        {
+            print_type(type->params[i], 0); // Recursive call with zero indent
+            if (i < type->param_count - 1)
+            {
+                printf(", ");
+            }
+        }
+        printf("]");
+    }
+
+    // Print the kind of type
+    switch (type->kind)
+    {
+    case TYPE_BASIC:
+        printf(" (Basic)\n");
+        break;
+    case TYPE_ADT:
+        printf(" (ADT)\n");
+        break;
+    case TYPE_FUNCTION:
+        printf(" (Function)\n");
+        break;
+    default:
+        printf(" (Unknown Type)\n");
+        break;
+    }
 }
 
 ASTNode *parse_string(Parser *parser)
@@ -554,7 +622,7 @@ void free_ast(ASTNode *node)
         free(node->adt_constructor_def.constructor);
         for (int i = 0; i < node->adt_constructor_def.arg_count; i++)
         {
-            free_ast(node->adt_constructor_def.arguments[i]);
+            free_type(node->adt_constructor_def.arguments[i]);
         }
         free(node->adt_constructor_def.arguments);
         break;
@@ -699,7 +767,7 @@ void print_ast(ASTNode *node, int indent)
             {
                 printf("  ");
             }
-            printf("Parameter: %s\n", node->function_def.parameters[i]);
+            print_ast(node->function_def.param_types[i], indent + 1);
         }
         // Print function body
         for (int i = 0; i < indent + 1; i++)
@@ -738,7 +806,7 @@ void print_ast(ASTNode *node, int indent)
                 printf("  ");
             }
             printf("Field %d:\n", i + 1);
-            print_ast(node->adt_constructor_def.arguments[i], indent + 2);
+            print_type(node->adt_constructor_def.arguments[i], indent + 2);
         }
         break;
     }
@@ -821,7 +889,7 @@ void print_ast(ASTNode *node, int indent)
     default:
     {
         const char *got = ast_node_type_to_string(node->type);
-        printf("Unknown node type: %s\n", got);
+        printf("Unknown node type: %s (%d)\n", got, node->type);
         break;
     }
     }

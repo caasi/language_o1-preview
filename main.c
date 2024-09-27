@@ -49,6 +49,7 @@ int main()
     else
     {
         printf("Result is not a number.\n");
+        print_ast(ast, 0);
     }
 
     // Clean up

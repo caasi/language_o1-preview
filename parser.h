@@ -67,9 +67,9 @@ typedef struct ASTNode
         } function_call; // For AST_FUNCTION_CALL
         struct
         {
-            char *type_name;            // The ADT type name (e.g. "Maybe")
-            char *constructor;          // The constructor name (e.g. "Just")
-            struct ASTNode **arguments; // Arguments passed to the constructor
+            char *type_name;         // The ADT type name (e.g. "Maybe")
+            char *constructor;       // The constructor name (e.g. "Just")
+            struct Type **arguments; // Arguments passed to the constructor
             int arg_count;
         } adt_constructor_def; // For AST_ADT_CONSTRUCTOR_DEF
         struct
@@ -116,6 +116,8 @@ void parser_eat(Parser *parser, TokenType token_type);
 
 Type *parse_type(Parser *parser);
 Type *parse_atomic_type(Parser *parser);
+void free_type(Type *type);
+void print_type(Type *type, int indent);
 
 ASTNode *parse_term(Parser *parser);
 ASTNode *parse_string(Parser *parser);
