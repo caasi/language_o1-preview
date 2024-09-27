@@ -12,8 +12,9 @@ typedef enum
     AST_VARIABLE,
     AST_FUNCTION_DEF,
     AST_FUNCTION_CALL,
-    AST_ADT_CONSTRUCTOR,
+    AST_ADT_CONSTRUCTOR_DEF,
     AST_ADT_DEFINITION,
+    AST_ADT_CONSTRUCTOR_CALL,
     AST_LET_BINDING,
     AST_STATEMENT_LIST,
     AST_IF_EXPR,
@@ -63,20 +64,27 @@ typedef struct ASTNode
             char *name;                 // Function name
             struct ASTNode **arguments; // Argument expressions
             int arg_count;
-        } function_call;
+        } function_call; // For AST_FUNCTION_CALL
         struct
         {
             char *type_name;            // The ADT type name (e.g. "Maybe")
             char *constructor;          // The constructor name (e.g. "Just")
             struct ASTNode **arguments; // Arguments passed to the constructor
             int arg_count;
-        } adt_constructor; // For AST_ADT_CONSTRUCTOR
+        } adt_constructor_def; // For AST_ADT_CONSTRUCTOR_DEF
         struct
         {
             char *type_name;
             struct ASTNode **constructors;
             int constructor_count;
         } adt_definition; // For AST_ADT_DEFINITION
+        struct
+        {
+            char *type_name;            // The ADT type name (e.g. "Maybe")
+            char *constructor;          // The constructor name (e.g. "Just")
+            struct ASTNode **arguments; // Arguments passed to the constructor
+            int arg_count;
+        } adt_constructor_call; // For AST_ADT_CONSTRUCTOR_CALL
         struct
         {                          // AST_LET_BINDING
             char *name;            // Variable name
@@ -116,7 +124,7 @@ ASTNode *parse_multiplicative_expression(Parser *parser);
 ASTNode *parse_additive_expression(Parser *parser);
 ASTNode *parse_expression(Parser *parser);
 ASTNode *parse_adt_definition(Parser *parser);
-ASTNode *parse_adt_constructor(Parser *parser);
+ASTNode *parse_adt_constructor_call(Parser *parser);
 ASTNode *parse_comparison(Parser *parser);
 ASTNode *parse_factor(Parser *parser);
 ASTNode *parse_function_definition(Parser *parser);
@@ -126,7 +134,7 @@ ASTNode *parse_statement_list(Parser *parser);
 ASTNode *parse_statement(Parser *parser);
 
 void free_ast(ASTNode *node);
-
+const char *ast_node_type_to_string(ASTNodeType type);
 void print_ast(ASTNode *node, int indent);
 
 #endif // PARSER_H

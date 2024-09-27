@@ -250,7 +250,10 @@ Value *evaluate(ASTNode *node, Env *env, int depth)
         return result;
     }
     default:
-        fprintf(stderr, "Error: Unknown AST node type '%d'\n", node->type);
+    {
+        const char *got = ast_node_type_to_string(node->type);
+        fprintf(stderr, "Error: Evaluating unknown AST node type '%s'\n", got);
         exit(EXIT_FAILURE);
+    }
     }
 }

@@ -354,7 +354,7 @@ ASTNode *parse_expression(Parser *parser)
     }
     else if (parser->current_token.type == TOKEN_IDENTIFIER)
     {
-        node = parse_adt_constructor(parser);
+        node = parse_adt_constructor_call(parser);
     }
     else
     {
@@ -395,10 +395,6 @@ ASTNode *parse_adt_definition(Parser *parser)
     char *type_name = strdup(parser->current_token.text);
     parser_eat(parser, TOKEN_IDENTIFIER);
 
-    // Optional type parameters (e.g., a in Maybe a)
-    // For simplicity, assume no type parameters initially
-    // To handle type parameters, extend the grammar accordingly
-
     // Expect '='
     parser_eat(parser, TOKEN_EQUAL);
 
@@ -417,50 +413,35 @@ ASTNode *parse_adt_definition(Parser *parser)
         parser_eat(parser, TOKEN_IDENTIFIER);
 
         // Parse constructor fields (if any)
-        // For simplicity, assume constructors have one field
-        // To handle multiple fields, extend the parser accordingly
-
         ASTNode **fields = NULL;
         int field_count = 0;
 
-        // Check if constructor has fields (e.g., Just a)
-        if (parser->current_token.type == TOKEN_IDENTIFIER ||
+        // Parse fields until a '|' separator or ';' is encountered
+        while (
             parser->current_token.type == TOKEN_TYPE_NUMBER ||
             parser->current_token.type == TOKEN_TYPE_STRING ||
+            parser->current_token.type == TOKEN_TYPE_BOOL ||
+            parser->current_token.type == TOKEN_IDENTIFIER ||
             parser->current_token.type == TOKEN_LPAREN)
-        { // Extend as needed
+        {
             // Parse field type
-            // For simplicity, assume field type is a basic type
-            // To handle complex types, extend the parser accordingly
-
             Type *field_type = parse_type(parser);
 
-            // Create a constructor node
-            ASTNode *constructor = malloc(sizeof(ASTNode));
-            constructor->type = AST_ADT_CONSTRUCTOR;
-            constructor->adt_constructor.type_name = strdup(type_name);
-            constructor->adt_constructor.constructor = strdup(constructor_name);
-            constructor->adt_constructor.arguments = malloc(sizeof(ASTNode *) * 1);
-            constructor->adt_constructor.arguments[0] = NULL; // Placeholder for field expression
-            constructor->adt_constructor.arg_count = 1;
-
-            // Note: You may need to extend AST_ADT_CONSTRUCTOR to include field types if necessary
-            constructors = realloc(constructors, sizeof(ASTNode *) * (constructor_count + 1));
-            constructors[constructor_count++] = constructor;
+            fields = realloc(fields, sizeof(ASTNode *) * (field_count + 1));
+            fields[field_count++] = field_type;
         }
-        else
-        {
-            // Constructor without fields (e.g., Nothing)
-            ASTNode *constructor = malloc(sizeof(ASTNode));
-            constructor->type = AST_ADT_CONSTRUCTOR;
-            constructor->adt_constructor.type_name = strdup(type_name);
-            constructor->adt_constructor.constructor = strdup(constructor_name);
-            constructor->adt_constructor.arguments = NULL;
-            constructor->adt_constructor.arg_count = 0;
 
-            constructors = realloc(constructors, sizeof(ASTNode *) * (constructor_count + 1));
-            constructors[constructor_count++] = constructor;
-        }
+        // Create a constructor node
+        ASTNode *constructor = malloc(sizeof(ASTNode));
+        constructor->type = AST_ADT_CONSTRUCTOR_DEF;
+        constructor->adt_constructor_def.type_name = strdup(type_name);
+        constructor->adt_constructor_def.constructor = strdup(constructor_name);
+        constructor->adt_constructor_def.arguments = fields;
+        constructor->adt_constructor_def.arg_count = field_count;
+
+        // Note: You may need to extend AST_ADT_CONSTRUCTOR to include field types if necessary
+        constructors = realloc(constructors, sizeof(ASTNode *) * (constructor_count + 1));
+        constructors[constructor_count++] = constructor;
 
         // Check for '|' separator
         if (parser->current_token.type == TOKEN_PIPE)
@@ -480,47 +461,47 @@ ASTNode *parse_adt_definition(Parser *parser)
     node->adt_definition.constructors = constructors;
     node->adt_definition.constructor_count = constructor_count;
 
-    // Optional: Store type parameters if implemented
-
     return node;
 }
 
-ASTNode *parse_adt_constructor(Parser *parser)
+ASTNode *parse_adt_constructor_call(Parser *parser)
 {
-    // Assume the constructor name has already been consumed and passed to this function
-
     // For this example, constructors are treated similarly to function calls
     // Parse constructor arguments if any
-
     char *constructor_name = strdup(parser->current_token.text);
     parser_eat(parser, TOKEN_IDENTIFIER);
 
-    // Check if constructor has arguments (e.g., Just 5)
     ASTNode **arguments = NULL;
     int arg_count = 0;
 
-    // Simple heuristic: if the next token starts an expression, parse it as an argument
-    if (parser->current_token.type != TOKEN_SEMICOLON &&
-        parser->current_token.type != TOKEN_PIPE &&
-        parser->current_token.type != TOKEN_RPAREN &&
-        parser->current_token.type != TOKEN_COMMA)
-    { // Extend as needed
-        // Parse arguments (for simplicity, assume single argument)
+    // Parse arguments until a delimiter is encountered
+    while (parser->current_token.type != TOKEN_SEMICOLON &&
+           parser->current_token.type != TOKEN_PIPE &&
+           parser->current_token.type != TOKEN_RPAREN &&
+           parser->current_token.type != TOKEN_COMMA &&
+           parser->current_token.type != TOKEN_KEYWORD_IN &&
+           parser->current_token.type != TOKEN_KEYWORD_END &&
+           parser->current_token.type != TOKEN_EOF)
+    {
         ASTNode *arg = parse_expression(parser);
-        arguments = malloc(sizeof(ASTNode *) * 1);
+        arguments = realloc(arguments, sizeof(ASTNode *) * (arg_count + 1));
         arguments[arg_count++] = arg;
-        // Extend to handle multiple arguments if needed
     }
 
     // Create the ADT constructor node
-    ASTNode *constructor_node = malloc(sizeof(ASTNode));
-    constructor_node->type = AST_ADT_CONSTRUCTOR;
-    constructor_node->adt_constructor.type_name = NULL; // To be filled during evaluation
-    constructor_node->adt_constructor.constructor = constructor_name;
-    constructor_node->adt_constructor.arguments = arguments;
-    constructor_node->adt_constructor.arg_count = arg_count;
+    ASTNode *constructor_call = malloc(sizeof(ASTNode));
+    if (!constructor_call)
+    {
+        fprintf(stderr, "Error: Memory allocation failed for ADT constructor call node\n");
+        exit(EXIT_FAILURE);
+    }
+    constructor_call->type = AST_ADT_CONSTRUCTOR_CALL;
+    constructor_call->adt_constructor_def.type_name = NULL; // To be filled during evaluation
+    constructor_call->adt_constructor_def.constructor = constructor_name;
+    constructor_call->adt_constructor_def.arguments = arguments;
+    constructor_call->adt_constructor_def.arg_count = arg_count;
 
-    return constructor_node;
+    return constructor_call;
 }
 
 void free_ast(ASTNode *node)
@@ -560,6 +541,32 @@ void free_ast(ASTNode *node)
         }
         free(node->function_call.arguments);
         break;
+    case AST_ADT_CONSTRUCTOR_DEF:
+        free(node->adt_constructor_def.type_name);
+        free(node->adt_constructor_def.constructor);
+        for (int i = 0; i < node->adt_constructor_def.arg_count; i++)
+        {
+            free_ast(node->adt_constructor_def.arguments[i]);
+        }
+        free(node->adt_constructor_def.arguments);
+        break;
+    case AST_ADT_DEFINITION:
+        free(node->adt_definition.type_name);
+        for (int i = 0; i < node->adt_definition.constructor_count; i++)
+        {
+            free_ast(node->adt_definition.constructors[i]);
+        }
+        free(node->adt_definition.constructors);
+        break;
+    case AST_ADT_CONSTRUCTOR_CALL:
+        free(node->adt_constructor_call.type_name);
+        free(node->adt_constructor_call.constructor);
+        for (int i = 0; i < node->adt_constructor_call.arg_count; i++)
+        {
+            free_ast(node->adt_constructor_call.arguments[i]);
+        }
+        free(node->adt_constructor_call.arguments);
+        break;
     case AST_LET_BINDING:
         free(node->let_binding.name);
         free_ast(node->let_binding.value);
@@ -578,11 +585,49 @@ void free_ast(ASTNode *node)
         free_ast(node->if_expr.else_branch);
         break;
     default:
-        fprintf(stderr, "Error: Unknown AST node type '%d' in free_ast\n", node->type);
+    {
+        const char *got = ast_node_type_to_string(node->type);
+        fprintf(stderr, "Error: Unknown AST node type '%s' in free_ast\n", got);
         exit(EXIT_FAILURE);
+    }
     }
 
     free(node);
+}
+
+const char *ast_node_type_to_string(ASTNodeType type)
+{
+    switch (type)
+    {
+    case AST_NUMBER:
+        return "Number";
+    case AST_STRING:
+        return "String";
+    case AST_BOOL:
+        return "Bool";
+    case AST_BINOP:
+        return "Binary Operation";
+    case AST_VARIABLE:
+        return "Variable";
+    case AST_FUNCTION_DEF:
+        return "Function Definition";
+    case AST_FUNCTION_CALL:
+        return "Function Call";
+    case AST_ADT_CONSTRUCTOR_DEF:
+        return "ADT Constructor Definition";
+    case AST_ADT_DEFINITION:
+        return "ADT Definition";
+    case AST_ADT_CONSTRUCTOR_CALL:
+        return "ADT Constructor Call";
+    case AST_LET_BINDING:
+        return "Let Binding";
+    case AST_STATEMENT_LIST:
+        return "Statement List";
+    case AST_IF_EXPR:
+        return "If Expression";
+    default:
+        return "Unknown";
+    }
 }
 
 void print_ast(ASTNode *node, int indent)
@@ -674,18 +719,18 @@ void print_ast(ASTNode *node, int indent)
         break;
     }
 
-    case AST_ADT_CONSTRUCTOR:
+    case AST_ADT_CONSTRUCTOR_DEF:
     {
-        printf("ADT Constructor: %s\n", node->adt_constructor.constructor);
+        printf("ADT Constructor Definition: %s\n", node->adt_constructor_def.constructor);
         // Print arguments
-        for (int i = 0; i < node->adt_constructor.arg_count; i++)
+        for (int i = 0; i < node->adt_constructor_def.arg_count; i++)
         {
             for (int j = 0; j < indent + 1; j++)
             {
                 printf("  ");
             }
-            printf("Argument %d:\n", i + 1);
-            print_ast(node->adt_constructor.arguments[i], indent + 2);
+            printf("Field %d:\n", i + 1);
+            print_ast(node->adt_constructor_def.arguments[i], indent + 2);
         }
         break;
     }
@@ -697,6 +742,22 @@ void print_ast(ASTNode *node, int indent)
         for (int i = 0; i < node->adt_definition.constructor_count; i++)
         {
             print_ast(node->adt_definition.constructors[i], indent + 1);
+        }
+        break;
+    }
+
+    case AST_ADT_CONSTRUCTOR_CALL:
+    {
+        printf("ADT Constructor Call: %s\n", node->adt_constructor_call.constructor);
+        // Print arguments
+        for (int i = 0; i < node->adt_constructor_call.arg_count; i++)
+        {
+            for (int j = 0; j < indent + 1; j++)
+            {
+                printf("  ");
+            }
+            printf("Argument %d:\n", i + 1);
+            print_ast(node->adt_constructor_call.arguments[i], indent + 2);
         }
         break;
     }
@@ -750,8 +811,11 @@ void print_ast(ASTNode *node, int indent)
     }
 
     default:
-        printf("Unknown node type: %d\n", node->type);
+    {
+        const char *got = ast_node_type_to_string(node->type);
+        printf("Unknown node type: %s\n", got);
         break;
+    }
     }
 }
 
