@@ -1,0 +1,5 @@
+type Maybe = Just Number | Nothing;
+
+let res = UnknownConstructor 5 in
+  res
+end;
