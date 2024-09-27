@@ -44,7 +44,7 @@ int main()
     // Output the result
     if (result != NULL)
     {
-        print_value(result, 0);
+        print_value(result, 0, 1);
         free_value(result);
     }
     else

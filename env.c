@@ -22,12 +22,14 @@ const char *value_type_to_string(ValueType type)
     }
 }
 
-void print_value(Value *val, int indent)
+void print_value(Value *val, int indent, int newline)
 {
     if (val == NULL)
     {
         print_indentation(indent);
-        printf("null\n");
+        printf("null");
+        if (newline)
+            printf("\n");
         return;
     }
 
@@ -35,19 +37,27 @@ void print_value(Value *val, int indent)
     {
     case VAL_NUMBER:
         print_indentation(indent);
-        printf("%lf\n", val->number);
+        printf("%lf", val->number);
+        if (newline)
+            printf("\n");
         break;
     case VAL_STRING:
         print_indentation(indent);
-        printf("\"%s\"\n", val->string_value);
+        printf("\"%s\"", val->string_value);
+        if (newline)
+            printf("\n");
         break;
     case VAL_FUNCTION:
         print_indentation(indent);
-        printf("Function\n");
+        printf("Function");
+        if (newline)
+            printf("\n");
         break;
     case VAL_BOOL:
         print_indentation(indent);
-        printf("%s\n", val->bool_value ? "True" : "False");
+        printf("%s", val->bool_value ? "True" : "False");
+        if (newline)
+            printf("\n");
         break;
     case VAL_ADT:
         print_indentation(indent);
@@ -57,17 +67,17 @@ void print_value(Value *val, int indent)
             printf(" (\n");
             for (int i = 0; i < val->adt.field_count; i++)
             {
-                print_value(val->adt.fields[i], indent + 1);
+                print_value(val->adt.fields[i], indent + 1, 0);
                 if (i < val->adt.field_count - 1)
                     printf(",\n");
+                else
+                    printf("\n");
             }
             print_indentation(indent);
-            printf(")\n");
+            printf(")");
         }
-        else
-        {
+        if (newline)
             printf("\n");
-        }
         break;
     // ... handle other value types as needed ...
     default:
