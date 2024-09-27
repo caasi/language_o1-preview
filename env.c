@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include "print.h"
 #include "env.h"
 
 const char *value_type_to_string(ValueType type)
@@ -21,45 +22,56 @@ const char *value_type_to_string(ValueType type)
     }
 }
 
-void print_value(Value *val)
+void print_value(Value *val, int indent)
 {
     if (val == NULL)
     {
-        printf("null");
+        print_indentation(indent);
+        printf("null\n");
         return;
     }
 
     switch (val->type)
     {
     case VAL_NUMBER:
-        printf("%lf", val->number);
+        print_indentation(indent);
+        printf("%lf\n", val->number);
         break;
     case VAL_STRING:
-        printf("\"%s\"", val->string_value);
+        print_indentation(indent);
+        printf("\"%s\"\n", val->string_value);
         break;
     case VAL_FUNCTION:
-        printf("Function");
+        print_indentation(indent);
+        printf("Function\n");
         break;
     case VAL_BOOL:
-        printf("%s", val->bool_value ? "True" : "False");
+        print_indentation(indent);
+        printf("%s\n", val->bool_value ? "True" : "False");
         break;
     case VAL_ADT:
+        print_indentation(indent);
         printf("%s", val->adt.constructor);
         if (val->adt.field_count > 0)
         {
-            printf(" (");
+            printf(" (\n");
             for (int i = 0; i < val->adt.field_count; i++)
             {
-                print_value(val->adt.fields[i]);
+                print_value(val->adt.fields[i], indent + 1);
                 if (i < val->adt.field_count - 1)
-                    printf(", ");
+                    printf(",\n");
             }
-            printf(")");
+            print_indentation(indent);
+            printf(")\n");
+        }
+        else
+        {
+            printf("\n");
         }
         break;
     // ... handle other value types as needed ...
     default:
-        printf("Unknown value type '%s'", value_type_to_string(val->type));
+        printf("Unknown value type '%s'\n", value_type_to_string(val->type));
         break;
     }
 }

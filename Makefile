@@ -8,7 +8,7 @@ CFLAGS = -Wall -Wextra -std=c11 -g
 INCULDES = -I.
 
 # Source Files
-SRCS = main.c lexer.c parser.c env.c symbol_table.c evaluator.c
+SRCS = main.c lexer.c parser.c env.c symbol_table.c evaluator.c print.c
 
 # Object Files
 OBJS = $(SRCS:.c=.o)

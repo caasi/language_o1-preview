@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "print.h"
 #include "parser.h"
 
 Parser parser_create(Lexer lexer)
@@ -712,10 +713,7 @@ void print_ast(ASTNode *node, int indent)
         return;
 
     // Print indentation spaces
-    for (int i = 0; i < indent; i++)
-    {
-        printf("  "); // Two spaces per indent level
-    }
+    print_indentation(indent);
 
     switch (node->type)
     {
@@ -763,17 +761,11 @@ void print_ast(ASTNode *node, int indent)
         // Print parameters
         for (int i = 0; i < node->function_def.param_count; i++)
         {
-            for (int j = 0; j < indent + 1; j++)
-            {
-                printf("  ");
-            }
+            print_indentation(indent + 1);
             print_ast(node->function_def.param_types[i], indent + 1);
         }
         // Print function body
-        for (int i = 0; i < indent + 1; i++)
-        {
-            printf("  ");
-        }
+        print_indentation(indent + 1);
         printf("Body:\n");
         print_ast(node->function_def.body, indent + 2);
         break;
@@ -785,10 +777,7 @@ void print_ast(ASTNode *node, int indent)
         // Print arguments
         for (int i = 0; i < node->function_call.arg_count; i++)
         {
-            for (int j = 0; j < indent + 1; j++)
-            {
-                printf("  ");
-            }
+            print_indentation(indent + 1);
             printf("Argument %d:\n", i + 1);
             print_ast(node->function_call.arguments[i], indent + 2);
         }
@@ -801,10 +790,7 @@ void print_ast(ASTNode *node, int indent)
         // Print arguments
         for (int i = 0; i < node->adt_constructor_def.arg_count; i++)
         {
-            for (int j = 0; j < indent + 1; j++)
-            {
-                printf("  ");
-            }
+            print_indentation(indent + 1);
             printf("Field %d:\n", i + 1);
             print_type(node->adt_constructor_def.arguments[i], indent + 2);
         }
@@ -828,10 +814,7 @@ void print_ast(ASTNode *node, int indent)
         // Print arguments
         for (int i = 0; i < node->adt_constructor_call.arg_count; i++)
         {
-            for (int j = 0; j < indent + 1; j++)
-            {
-                printf("  ");
-            }
+            print_indentation(indent + 1);
             printf("Argument %d:\n", i + 1);
             print_ast(node->adt_constructor_call.arguments[i], indent + 2);
         }
@@ -842,17 +825,11 @@ void print_ast(ASTNode *node, int indent)
     {
         printf("Let Binding: %s\n", node->let_binding.name);
         // Print value expression
-        for (int i = 0; i < indent + 1; i++)
-        {
-            printf("  ");
-        }
+        print_indentation(indent + 1);
         printf("Value:\n");
         print_ast(node->let_binding.value, indent + 2);
         // Print body expression
-        for (int i = 0; i < indent + 1; i++)
-        {
-            printf("  ");
-        }
+        print_indentation(indent + 1);
         printf("Body:\n");
         print_ast(node->let_binding.body, indent + 2);
         break;
@@ -871,16 +848,13 @@ void print_ast(ASTNode *node, int indent)
     case AST_IF_EXPR:
     {
         printf("If Expression:\n");
-        for (int i = 0; i < indent + 1; i++)
-            printf("  ");
+        print_indentation(indent + 1);
         printf("Condition:\n");
         print_ast(node->if_expr.condition, indent + 2);
-        for (int i = 0; i < indent + 1; i++)
-            printf("  ");
+        print_indentation(indent + 1);
         printf("Then Branch:\n");
         print_ast(node->if_expr.then_branch, indent + 2);
-        for (int i = 0; i < indent + 1; i++)
-            printf("  ");
+        print_indentation(indent + 1);
         printf("Else Branch:\n");
         print_ast(node->if_expr.else_branch, indent + 2);
         break;

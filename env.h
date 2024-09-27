@@ -47,7 +47,7 @@ struct Env
 };
 
 const char *value_type_to_string(ValueType type);
-void print_value(Value *value);
+void print_value(Value *value, int indent);
 
 Env *env_create(Env *parent);
 void env_define(Env *env, const char *name, Value *value, int is_owned);
