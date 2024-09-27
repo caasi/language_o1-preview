@@ -354,7 +354,15 @@ ASTNode *parse_expression(Parser *parser)
     }
     else if (parser->current_token.type == TOKEN_IDENTIFIER)
     {
-        node = parse_adt_constructor_call(parser);
+        // Check if the identifier is a type name
+        if (parser->current_token.text[0] >= 'A' && parser->current_token.text[0] <= 'Z')
+        {
+            node = parse_adt_constructor_call(parser);
+        }
+        else
+        {
+            node = parse_term(parser);
+        }
     }
     else
     {

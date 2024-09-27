@@ -1,1 +1,2 @@
-Error: Evaluating unknown AST node type 'ADT Definition'
+Error: Unknown AST node type 'Unknown' in free_ast
+Result is not a number.

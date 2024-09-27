@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "evaluator.h"
+#include "symbol_table.h"
 
 int main()
 {
@@ -31,14 +32,14 @@ int main()
         return EXIT_FAILURE;
     }
 
-    // Print the AST for debugging
-    // print_ast(ast, 0); // Start with an indentation level of 0
+    // Initialize the symbol table
+    SymbolTable *sym_table = symbol_table_create();
 
     // Initialize the global environment
     Env *global_env = env_create(NULL);
 
     // Evaluate the AST
-    Value *result = evaluate(ast, global_env, 0);
+    Value *result = evaluate(ast, global_env, sym_table, 0);
 
     // Output the result if it's a number
     if (result->type == VAL_NUMBER)
