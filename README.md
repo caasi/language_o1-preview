@@ -1,16 +1,12 @@
 # languag o1-preview
 
-In this project, I am going to create a small language with the help of OpenAI's
-o1-preview model. My goal is to change as little as possible and let the
-language model implement the language.
+In this project, I am creating a small language with the help of OpenAI's o1-preview model. My goal is to change as little as possible and let the language model implement the language.
 
 You can check the conversation [here](https://chatgpt.com/share/66f3e88c-c714-8003-b36e-0220effd8bad).
 
 ## Overview
 
-This language is being developed step by step, starting from a simple calculator
-that can perform basic arithmetic operations with decimal numbers, and gradually
-adding more complex features such as variables, functions, and scoping rules.
+This language is developed step by step, starting from a simple calculator that can perform basic arithmetic operations with decimal numbers, and gradually adding more complex features such as variables, functions, scoping rules, and Algebraic Data Types (ADTs).
 
 ## Features
 
@@ -22,6 +18,10 @@ adding more complex features such as variables, functions, and scoping rules.
 - **Function Applications**: Allows calling functions with arguments.
 - **Variables and Scoping**: Introduces variable bindings with lexical scoping.
 - **First-Class Functions**: Functions are treated as values that can be passed around.
+- **Algebraic Data Types (ADTs)**:
+    - **ADT Definitions**: Define custom types with multiple constructors.
+    - **Constructor Calls**: Instantiate ADTs using their constructors.
+    - **Pattern Matching**: (Planned) Deconstruct ADTs within expressions for more expressive code.
 
 ## Problems
 
