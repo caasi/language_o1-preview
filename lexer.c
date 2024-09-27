@@ -13,10 +13,14 @@ Lexer lexer_create(const char *text)
     return lexer;
 }
 
-char lexer_peek(Lexer *lexer) {
-    if (lexer->pos + 1 < strlen(lexer->text)) {
+char lexer_peek(Lexer *lexer)
+{
+    if (lexer->pos + 1 < strlen(lexer->text))
+    {
         return lexer->text[lexer->pos + 1];
-    } else {
+    }
+    else
+    {
         return '\0';
     }
 }
@@ -60,18 +64,21 @@ Token lexer_get_number(Lexer *lexer)
     return token;
 }
 
-Token lexer_get_string(Lexer *lexer) {
+Token lexer_get_string(Lexer *lexer)
+{
     lexer_advance(lexer); // Skip the opening quote
 
     char buffer[1024]; // Adjust size as needed
     int length = 0;
 
-    while (lexer->current_char != '"' && lexer->current_char != '\0') {
+    while (lexer->current_char != '"' && lexer->current_char != '\0')
+    {
         buffer[length++] = lexer->current_char;
         lexer_advance(lexer);
     }
 
-    if (lexer->current_char == '\0') {
+    if (lexer->current_char == '\0')
+    {
         fprintf(stderr, "Error: Unterminated string literal\n");
         exit(EXIT_FAILURE);
     }
@@ -96,7 +103,8 @@ Token lexer_get_next_token(Lexer *lexer)
         {
             return lexer_get_number(lexer);
         }
-        if (lexer->current_char == '"') {
+        if (lexer->current_char == '"')
+        {
             return lexer_get_string(lexer);
         }
         if (lexer->current_char == '+')
@@ -136,6 +144,35 @@ Token lexer_get_next_token(Lexer *lexer)
             return lexer_get_identifier(lexer);
         }
 
+        if (strncmp(lexer->text + lexer->pos, "type", 4) == 0 && !isalnum(lexer->text[lexer->pos + 4]))
+        {
+            // TODO: add a parameter to specify the length to advance
+            for (int i = 0; i < 4; i++)
+            {
+                lexer_advance(lexer);
+            }
+            return (Token){TOKEN_TYPE, 0, NULL};
+        }
+
+        // Handle '|'
+        if (lexer->current_char == '|')
+        {
+            lexer_advance(lexer);
+            return (Token){TOKEN_PIPE, 0, NULL};
+        }
+
+        // Handle '{' and '}'
+        if (lexer->current_char == '{')
+        {
+            lexer_advance(lexer);
+            return (Token){TOKEN_LBRACE, 0, NULL};
+        }
+        if (lexer->current_char == '}')
+        {
+            lexer_advance(lexer);
+            return (Token){TOKEN_RBRACE, 0, NULL};
+        }
+
         // Arrow '->'
         if (lexer->current_char == '-')
         {
@@ -170,44 +207,59 @@ Token lexer_get_next_token(Lexer *lexer)
         // Equal '='
         if (lexer->current_char == '=')
         {
-            if (lexer_peek(lexer) == '=') {
+            if (lexer_peek(lexer) == '=')
+            {
                 lexer_advance(lexer); // Skip '='
                 lexer_advance(lexer); // Skip second '='
                 return (Token){TOKEN_EQUAL_EQUAL, 0, NULL};
-            } else {
+            }
+            else
+            {
                 lexer_advance(lexer);
                 return (Token){TOKEN_EQUAL, 0, NULL};
             }
         }
 
-        if (lexer->current_char == '!') {
-            if (lexer_peek(lexer) == '=') {
+        if (lexer->current_char == '!')
+        {
+            if (lexer_peek(lexer) == '=')
+            {
                 lexer_advance(lexer); // Skip '!'
                 lexer_advance(lexer); // Skip '='
                 return (Token){TOKEN_NOT_EQUAL, 0, NULL};
-            } else {
+            }
+            else
+            {
                 fprintf(stderr, "Error: Unexpected character '!'\n");
                 exit(EXIT_FAILURE);
             }
         }
 
-        if (lexer->current_char == '<') {
-            if (lexer_peek(lexer) == '=') {
+        if (lexer->current_char == '<')
+        {
+            if (lexer_peek(lexer) == '=')
+            {
                 lexer_advance(lexer); // Skip '<'
                 lexer_advance(lexer); // Skip '='
                 return (Token){TOKEN_LESS_EQUAL, 0, NULL};
-            } else {
+            }
+            else
+            {
                 lexer_advance(lexer);
                 return (Token){TOKEN_LESS, 0, NULL};
             }
         }
 
-        if (lexer->current_char == '>') {
-            if (lexer_peek(lexer) == '=') {
+        if (lexer->current_char == '>')
+        {
+            if (lexer_peek(lexer) == '=')
+            {
                 lexer_advance(lexer); // Skip '>'
                 lexer_advance(lexer); // Skip '='
                 return (Token){TOKEN_GREATER_EQUAL, 0, NULL};
-            } else {
+            }
+            else
+            {
                 lexer_advance(lexer);
                 return (Token){TOKEN_GREATER, 0, NULL};
             }
@@ -238,7 +290,19 @@ Token lexer_get_identifier(Lexer *lexer)
     buffer[i] = '\0';
 
     // Check for keywords
-    if (strcmp(buffer, "fun") == 0)
+    if (strcmp(buffer, "Number") == 0)
+    {
+        return (Token){TOKEN_TYPE_NUMBER, 0, NULL};
+    }
+    else if (strcmp(buffer, "String") == 0)
+    {
+        return (Token){TOKEN_TYPE_STRING, 0, NULL};
+    }
+    else if (strcmp(buffer, "Bool") == 0)
+    {
+        return (Token){TOKEN_TYPE_BOOL, 0, NULL};
+    }
+    else if (strcmp(buffer, "fun") == 0)
     {
         return (Token){TOKEN_KEYWORD_FUN, 0, NULL};
     }

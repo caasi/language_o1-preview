@@ -24,7 +24,122 @@ void parser_eat(Parser *parser, TokenType token_type)
     }
 }
 
-ASTNode *parse_string(Parser *parser) {
+Type *parse_atomic_type(Parser *parser)
+{
+    Type *type = malloc(sizeof(Type));
+    if (!type)
+    {
+        fprintf(stderr, "Error: Memory allocation failed for type\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialzie type parameters to NULL
+    type->params = NULL;
+    type->param_count = 0;
+
+    // Handle basic types
+    if (parser->current_token.type == TOKEN_TYPE_NUMBER)
+    {
+        type->name = strdup("Number");
+        type->kind = TYPE_BASIC;
+        parser_eat(parser, TOKEN_TYPE_NUMBER);
+    }
+    else if (parser->current_token.type == TOKEN_TYPE_STRING)
+    {
+        type->name = strdup("String");
+        type->kind = TYPE_BASIC;
+        parser_eat(parser, TOKEN_TYPE_STRING);
+    }
+    else if (parser->current_token.type == TOKEN_TYPE_BOOL)
+    {
+        type->name = strdup("Bool");
+        type->kind = TYPE_BASIC;
+        parser_eat(parser, TOKEN_TYPE_BOOL);
+    }
+    else if (parser->current_token.type == TOKEN_IDENTIFIER)
+    {
+        type->name = strdup(parser->current_token.text);
+        type->kind = TYPE_ADT;
+        parser_eat(parser, TOKEN_IDENTIFIER);
+
+        // Check for type parameters (e.g., Maybe Number)
+        if (parser->current_token.type == TOKEN_IDENTIFIER ||
+            parser->current_token.type == TOKEN_TYPE_NUMBER ||
+            parser->current_token.type == TOKEN_TYPE_STRING ||
+            parser->current_token.type == TOKEN_LPAREN) // Extend as needed
+        {
+            // Parse type parameters recursively
+            type->params = malloc(sizeof(Type *) * 1); // Initial allocation for one parameter
+            if (!type->params)
+            {
+                fprintf(stderr, "Error: Memory allocation failed for type parameters\n");
+                exit(EXIT_FAILURE);
+            }
+            type->params[0] = parse_type(parser); // Recursive call for each type parameter
+            type->param_count = 1;
+
+            // Extend to handle multyple type parameters if necessary
+            // For example, in future: Maybe a b, etc.
+        }
+    }
+    else if (parser->current_token.type == TOKEN_LPAREN)
+    {
+        parser_eat(parser, TOKEN_LPAREN); // Consume '('
+        type = parse_type(parser);        // Parse the enclosed type
+        parser_eat(parser, TOKEN_RPAREN); // Consume ')'
+    }
+    else
+    {
+        fprintf(stderr, "Error: Unexpected token '%d' while parsing type\n", parser->current_token.type);
+        exit(EXIT_FAILURE);
+    }
+
+    return type;
+}
+
+Type *parse_type(Parser *parser)
+{
+    // Parse the left-hand side (atomic type)
+    Type *left = parse_atomic_type(parser);
+
+    // Handle function types (e.g., Number -> Number)
+    while (parser->current_token.type == TOKEN_ARROW)
+    {
+        parser_eat(parser, TOKEN_ARROW);
+
+        // Parse the right-hand side (function return type)
+        Type *right = parse_type(parser); // Recursive call for right associativity
+
+        // Create a new Type for the function
+        Type *func_type = malloc(sizeof(Type));
+        if (!func_type)
+        {
+            fprintf(stderr, "Error: Memory allocation failed for function type\n");
+            exit(EXIT_FAILURE);
+        }
+
+        func_type->name = strdup("Function");
+        func_type->kind = TYPE_FUNCTION;
+
+        // Allocate and assign type parameters: [InputType, OutputType]
+        func_type->params = malloc(sizeof(Type *) * 2);
+        if (!func_type->params)
+        {
+            fprintf(stderr, "Error: Memory allocation failed for function type parameters\n");
+            exit(EXIT_FAILURE);
+        }
+        func_type->params[0] = left;
+        func_type->params[1] = right;
+        func_type->param_count = 2;
+
+        left = func_type; // The new type becomes the left for any further '->'
+    }
+
+    return left;
+}
+
+ASTNode *parse_string(Parser *parser)
+{
     ASTNode *node = malloc(sizeof(ASTNode));
     node->type = AST_STRING;
     node->string_value = strdup(parser->current_token.text);
@@ -45,7 +160,8 @@ ASTNode *parse_factor(Parser *parser)
         node->number = token.value;
         return node;
     }
-    else if (token.type == TOKEN_STRING) {
+    else if (token.type == TOKEN_STRING)
+    {
         return parse_string(parser);
     }
     else if (token.type == TOKEN_LPAREN)
@@ -109,7 +225,8 @@ ASTNode *parse_term(Parser *parser)
     return node;
 }
 
-ASTNode *parse_if_expression(Parser *parser) {
+ASTNode *parse_if_expression(Parser *parser)
+{
     parser_eat(parser, TOKEN_KEYWORD_IF);
 
     // Parse condition
@@ -137,11 +254,13 @@ ASTNode *parse_if_expression(Parser *parser) {
     return node;
 }
 
-ASTNode *parse_multiplicative_expression(Parser *parser) {
+ASTNode *parse_multiplicative_expression(Parser *parser)
+{
     ASTNode *node = parse_factor(parser);
 
     while (parser->current_token.type == TOKEN_MUL ||
-           parser->current_token.type == TOKEN_DIV) {
+           parser->current_token.type == TOKEN_DIV)
+    {
 
         TokenType op = parser->current_token.type;
         parser_eat(parser, op);
@@ -161,11 +280,13 @@ ASTNode *parse_multiplicative_expression(Parser *parser) {
     return node;
 }
 
-ASTNode *parse_additive_expression(Parser *parser) {
+ASTNode *parse_additive_expression(Parser *parser)
+{
     ASTNode *node = parse_multiplicative_expression(parser);
 
     while (parser->current_token.type == TOKEN_PLUS ||
-           parser->current_token.type == TOKEN_MINUS) {
+           parser->current_token.type == TOKEN_MINUS)
+    {
 
         TokenType op = parser->current_token.type;
         parser_eat(parser, op);
@@ -185,7 +306,8 @@ ASTNode *parse_additive_expression(Parser *parser) {
     return node;
 }
 
-ASTNode *parse_comparison(Parser *parser) {
+ASTNode *parse_comparison(Parser *parser)
+{
     ASTNode *node = parse_additive_expression(parser);
 
     while (parser->current_token.type == TOKEN_EQUAL_EQUAL ||
@@ -193,7 +315,8 @@ ASTNode *parse_comparison(Parser *parser) {
            parser->current_token.type == TOKEN_LESS ||
            parser->current_token.type == TOKEN_LESS_EQUAL ||
            parser->current_token.type == TOKEN_GREATER ||
-           parser->current_token.type == TOKEN_GREATER_EQUAL) {
+           parser->current_token.type == TOKEN_GREATER_EQUAL)
+    {
 
         TokenType op = parser->current_token.type;
         parser_eat(parser, op);
@@ -217,17 +340,23 @@ ASTNode *parse_expression(Parser *parser)
 {
     ASTNode *node;
 
-    if (parser->current_token.type == TOKEN_KEYWORD_LET) {
+    if (parser->current_token.type == TOKEN_KEYWORD_LET)
+    {
         node = parse_let_binding(parser);
-    } else if (parser->current_token.type == TOKEN_KEYWORD_IF) {
+    }
+    else if (parser->current_token.type == TOKEN_KEYWORD_IF)
+    {
         node = parse_if_expression(parser);
-    } else {
+    }
+    else
+    {
         node = parse_comparison(parser);
     }
 
     // Handle additional expressions (e.g., '+ x') after the initial expression
     while (parser->current_token.type == TOKEN_PLUS ||
-           parser->current_token.type == TOKEN_MINUS) {
+           parser->current_token.type == TOKEN_MINUS)
+    {
         TokenType op = parser->current_token.type;
         parser_eat(parser, op);
 
@@ -243,6 +372,147 @@ ASTNode *parse_expression(Parser *parser)
     }
 
     return node;
+}
+
+ASTNode *parse_adt_definition(Parser *parser)
+{
+    parser_eat(parser, TOKEN_TYPE);
+
+    // Parse the type name
+    if (parser->current_token.type != TOKEN_IDENTIFIER)
+    {
+        fprintf(stderr, "Error: Expected type name after 'type'\n");
+        exit(EXIT_FAILURE);
+    }
+    char *type_name = strdup(parser->current_token.text);
+    parser_eat(parser, TOKEN_IDENTIFIER);
+
+    // Optional type parameters (e.g., a in Maybe a)
+    // For simplicity, assume no type parameters initially
+    // To handle type parameters, extend the grammar accordingly
+
+    // Expect '='
+    parser_eat(parser, TOKEN_EQUAL);
+
+    // Parse constructors separated by '|'
+    ASTNode **constructors = NULL;
+    int constructor_count = 0;
+    do
+    {
+        // Parse costructor name
+        if (parser->current_token.type != TOKEN_IDENTIFIER)
+        {
+            fprintf(stderr, "Error: Expected constructor name\n");
+            exit(EXIT_FAILURE);
+        }
+        char *constructor_name = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_IDENTIFIER);
+
+        // Parse constructor fields (if any)
+        // For simplicity, assume constructors have one field
+        // To handle multiple fields, extend the parser accordingly
+
+        ASTNode **fields = NULL;
+        int field_count = 0;
+
+        // Check if constructor has fields (e.g., Just a)
+        if (parser->current_token.type == TOKEN_IDENTIFIER ||
+            parser->current_token.type == TOKEN_NUMBER ||
+            parser->current_token.type == TOKEN_STRING ||
+            parser->current_token.type == TOKEN_LPAREN)
+        { // Extend as needed
+            // Parse field type
+            // For simplicity, assume field type is a basic type
+            // To handle complex types, extend the parser accordingly
+
+            Type *field_type = parse_type(parser);
+
+            // Create a constructor node
+            ASTNode *constructor = malloc(sizeof(ASTNode));
+            constructor->type = AST_ADT_CONSTRUCTOR;
+            constructor->adt_constructor.type_name = strdup(type_name);
+            constructor->adt_constructor.constructor = strdup(constructor_name);
+            constructor->adt_constructor.arguments = malloc(sizeof(ASTNode *) * 1);
+            constructor->adt_constructor.arguments[0] = NULL; // Placeholder for field expression
+            constructor->adt_constructor.arg_count = 1;
+
+            // Note: You may need to extend AST_ADT_CONSTRUCTOR to include field types if necessary
+            constructors = realloc(constructors, sizeof(ASTNode *) * (constructor_count + 1));
+            constructors[constructor_count++] = constructor;
+        }
+        else
+        {
+            // Constructor without fields (e.g., Nothing)
+            ASTNode *constructor = malloc(sizeof(ASTNode));
+            constructor->type = AST_ADT_CONSTRUCTOR;
+            constructor->adt_constructor.type_name = strdup(type_name);
+            constructor->adt_constructor.constructor = strdup(constructor_name);
+            constructor->adt_constructor.arguments = NULL;
+            constructor->adt_constructor.arg_count = 0;
+
+            constructors = realloc(constructors, sizeof(ASTNode *) * (constructor_count + 1));
+            constructors[constructor_count++] = constructor;
+        }
+
+        // Check for '|' separator
+        if (parser->current_token.type == TOKEN_PIPE)
+        {
+            parser_eat(parser, TOKEN_PIPE);
+        }
+        else
+        {
+            break;
+        }
+    } while (1);
+
+    // Create the ADT definition node
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = AST_ADT_DEFINITION;
+    node->adt_definition.type_name = type_name;
+    node->adt_definition.constructors = constructors;
+    node->adt_definition.constructor_count = constructor_count;
+
+    // Optional: Store type parameters if implemented
+
+    return node;
+}
+
+ASTNode *parse_adt_constructor(Parser *parser)
+{
+    // Assume the constructor name has already been consumed and passed to this function
+
+    // For this example, constructors are treated similarly to function calls
+    // Parse constructor arguments if any
+
+    char *constructor_name = strdup(parser->current_token.text);
+    parser_eat(parser, TOKEN_IDENTIFIER);
+
+    // Check if constructor has arguments (e.g., Just 5)
+    ASTNode **arguments = NULL;
+    int arg_count = 0;
+
+    // Simple heuristic: if the next token starts an expression, parse it as an argument
+    if (parser->current_token.type != TOKEN_SEMICOLON &&
+        parser->current_token.type != TOKEN_PIPE &&
+        parser->current_token.type != TOKEN_RPAREN &&
+        parser->current_token.type != TOKEN_COMMA)
+    { // Extend as needed
+        // Parse arguments (for simplicity, assume single argument)
+        ASTNode *arg = parse_expression(parser);
+        arguments = malloc(sizeof(ASTNode *) * 1);
+        arguments[arg_count++] = arg;
+        // Extend to handle multiple arguments if needed
+    }
+
+    // Create the ADT constructor node
+    ASTNode *constructor_node = malloc(sizeof(ASTNode));
+    constructor_node->type = AST_ADT_CONSTRUCTOR;
+    constructor_node->adt_constructor.type_name = NULL; // To be filled during evaluation
+    constructor_node->adt_constructor.constructor = constructor_name;
+    constructor_node->adt_constructor.arguments = arguments;
+    constructor_node->adt_constructor.arg_count = arg_count;
+
+    return constructor_node;
 }
 
 void free_ast(ASTNode *node)
@@ -426,15 +696,19 @@ void print_ast(ASTNode *node, int indent)
         break;
     }
 
-    case AST_IF_EXPR: {
+    case AST_IF_EXPR:
+    {
         printf("If Expression:\n");
-        for (int i = 0; i < indent + 1; i++) printf("  ");
+        for (int i = 0; i < indent + 1; i++)
+            printf("  ");
         printf("Condition:\n");
         print_ast(node->if_expr.condition, indent + 2);
-        for (int i = 0; i < indent + 1; i++) printf("  ");
+        for (int i = 0; i < indent + 1; i++)
+            printf("  ");
         printf("Then Branch:\n");
         print_ast(node->if_expr.then_branch, indent + 2);
-        for (int i = 0; i < indent + 1; i++) printf("  ");
+        for (int i = 0; i < indent + 1; i++)
+            printf("  ");
         printf("Else Branch:\n");
         print_ast(node->if_expr.else_branch, indent + 2);
         break;

@@ -6,7 +6,9 @@ typedef enum
 {
     VAL_NUMBER,
     VAL_STRING,
-    VAL_FUNCTION
+    VAL_BOOL,
+    VAL_FUNCTION,
+    VAL_ADT
 } ValueType;
 
 typedef struct Env Env;
@@ -17,13 +19,21 @@ typedef struct
     int is_shared; // 1 if the value is shared and should not be freed
     union
     {
-        double number; // For VAL_NUMBER
+        double number;      // For VAL_NUMBER
         char *string_value; // For VAL_STRING
+        int bool_value;     // For VAL_BOOL
         struct
         {                      // For VAL_FUNCTION
             ASTNode *func_def; // Function definition AST node
             Env *env;          // Environment where the function was defined
         } function;
+        struct
+        {
+            char *type_name;       // Name of the ADT
+            char *constructor;     // Constructor used
+            struct Value **fields; // Fields carried by the constructor
+            int field_count;
+        } adt;
     };
 } Value;
 

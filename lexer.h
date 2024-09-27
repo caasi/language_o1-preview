@@ -7,6 +7,7 @@ typedef enum
 {
     TOKEN_NUMBER,
     TOKEN_STRING,
+    // TOKEN_BOOL,
     TOKEN_PLUS,
     TOKEN_MINUS,
     TOKEN_MUL,
@@ -14,6 +15,13 @@ typedef enum
     TOKEN_LPAREN,
     TOKEN_RPAREN,
     TOKEN_IDENTIFIER,
+    TOKEN_TYPE,        // 'type' keyword
+    TOKEN_PIPE,        // '|'
+    TOKEN_LBRACE,      // '{'
+    TOKEN_RBRACE,      // '}'
+    TOKEN_TYPE_NUMBER, // 'Number'
+    TOKEN_TYPE_STRING, // 'String'
+    TOKEN_TYPE_BOOL,   // 'Bool'
     TOKEN_KEYWORD_FUN,
     TOKEN_KEYWORD_LET,
     TOKEN_KEYWORD_IN,
@@ -21,16 +29,16 @@ typedef enum
     TOKEN_KEYWORD_IF,
     TOKEN_KEYWORD_THEN,
     TOKEN_KEYWORD_ELSE,
-    TOKEN_EQUAL_EQUAL, // '=='
-    TOKEN_NOT_EQUAL,   // '!='
-    TOKEN_LESS,        // '<'
-    TOKEN_LESS_EQUAL,  // '<='
-    TOKEN_GREATER,     // '>'
+    TOKEN_EQUAL_EQUAL,   // '=='
+    TOKEN_NOT_EQUAL,     // '!='
+    TOKEN_LESS,          // '<'
+    TOKEN_LESS_EQUAL,    // '<='
+    TOKEN_GREATER,       // '>'
     TOKEN_GREATER_EQUAL, // '>='
-    TOKEN_ARROW,     // '->'
-    TOKEN_COMMA,     // ','
-    TOKEN_SEMICOLON, // ';'
-    TOKEN_EQUAL,     // '='
+    TOKEN_ARROW,         // '->'
+    TOKEN_COMMA,         // ','
+    TOKEN_SEMICOLON,     // ';'
+    TOKEN_EQUAL,         // '='
     TOKEN_EOF,
 } TokenType;
 

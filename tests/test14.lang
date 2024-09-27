@@ -1,0 +1,6 @@
+type Maybe = Just Number | Nothing;
+
+let value: Maybe = Just 10 in
+  value
+end;
+
