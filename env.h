@@ -13,7 +13,7 @@ typedef enum
 
 typedef struct Env Env;
 
-typedef struct
+typedef struct Value
 {
     ValueType type;
     int is_shared; // 1 if the value is shared and should not be freed

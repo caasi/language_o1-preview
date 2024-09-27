@@ -55,8 +55,8 @@ typedef struct ASTNode
             int param_count;
             struct ASTNode *body; // Function body
             Type *return_type;
-            Type **param_types; // Arrary of types for parameters
-        } function_def;         // For AST_FUNCTION_DEF
+            struct ASTNode **param_types; // Arrary of types for parameters
+        } function_def;                   // For AST_FUNCTION_DEF
         struct
         {                               // AST_FUNCTION_CALL
             char *name;                 // Function name

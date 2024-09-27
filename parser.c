@@ -87,7 +87,7 @@ Type *parse_atomic_type(Parser *parser)
     }
     else
     {
-        char *got = token_type_to_string(parser->current_token.type);
+        const char *got = token_type_to_string(parser->current_token.type);
         fprintf(stderr, "Error: Unexpected token '%s' while parsing type\n", got);
         exit(EXIT_FAILURE);
     }
@@ -257,7 +257,7 @@ ASTNode *parse_factor(Parser *parser)
     }
     else
     {
-        char *got = token_type_to_string(token.type);
+        const char *got = token_type_to_string(token.type);
         fprintf(stderr, "Error: Unexpected token '%s' in factor\n", got);
         exit(EXIT_FAILURE);
     }
@@ -483,7 +483,7 @@ ASTNode *parse_adt_definition(Parser *parser)
         parser_eat(parser, TOKEN_IDENTIFIER);
 
         // Parse constructor fields (if any)
-        ASTNode **fields = NULL;
+        Type **fields = NULL;
         int field_count = 0;
 
         // Parse fields until a '|' separator or ';' is encountered
@@ -565,10 +565,10 @@ ASTNode *parse_adt_constructor_call(Parser *parser)
         exit(EXIT_FAILURE);
     }
     constructor_call->type = AST_ADT_CONSTRUCTOR_CALL;
-    constructor_call->adt_constructor_def.type_name = NULL; // To be filled during evaluation
-    constructor_call->adt_constructor_def.constructor = constructor_name;
-    constructor_call->adt_constructor_def.arguments = arguments;
-    constructor_call->adt_constructor_def.arg_count = arg_count;
+    constructor_call->adt_constructor_call.type_name = NULL; // To be filled during evaluation
+    constructor_call->adt_constructor_call.constructor = constructor_name;
+    constructor_call->adt_constructor_call.arguments = arguments;
+    constructor_call->adt_constructor_call.arg_count = arg_count;
 
     return constructor_call;
 }
@@ -1028,7 +1028,7 @@ ASTNode *parse_statement_list(Parser *parser)
         }
         else if (parser->current_token.type != TOKEN_EOF)
         {
-            char *got = token_type_to_string(parser->current_token.type);
+            const char *got = token_type_to_string(parser->current_token.type);
             fprintf(stderr, "Error: Expected ';' or end of input after statement, but got token type '%s'\n", got);
             print_ast(stmt, 0);
             exit(EXIT_FAILURE);
