@@ -7,7 +7,6 @@ typedef enum
 {
     TOKEN_NUMBER,
     TOKEN_STRING,
-    // TOKEN_BOOL,
     TOKEN_PLUS,
     TOKEN_MINUS,
     TOKEN_MUL,
@@ -21,7 +20,6 @@ typedef enum
     TOKEN_RBRACE,      // '}'
     TOKEN_TYPE_NUMBER, // 'Number'
     TOKEN_TYPE_STRING, // 'String'
-    TOKEN_TYPE_BOOL,   // 'Bool'
     TOKEN_KEYWORD_FUN,
     TOKEN_KEYWORD_LET,
     TOKEN_KEYWORD_IN,

@@ -38,8 +38,6 @@ const char *token_type_to_string(TokenType type)
         return "Number Type";
     case TOKEN_TYPE_STRING:
         return "String Type";
-    case TOKEN_TYPE_BOOL:
-        return "Bool Type";
     case TOKEN_KEYWORD_FUN:
         return "Function Keyword";
     case TOKEN_KEYWORD_LET:
@@ -368,10 +366,6 @@ Token lexer_get_identifier(Lexer *lexer)
     else if (strcmp(buffer, "String") == 0)
     {
         return (Token){TOKEN_TYPE_STRING, 0, NULL};
-    }
-    else if (strcmp(buffer, "Bool") == 0)
-    {
-        return (Token){TOKEN_TYPE_BOOL, 0, NULL};
     }
     else if (strcmp(buffer, "fun") == 0)
     {

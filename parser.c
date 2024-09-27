@@ -53,12 +53,6 @@ Type *parse_atomic_type(Parser *parser)
         type->kind = TYPE_BASIC;
         parser_eat(parser, TOKEN_TYPE_STRING);
     }
-    else if (parser->current_token.type == TOKEN_TYPE_BOOL)
-    {
-        type->name = strdup("Bool");
-        type->kind = TYPE_BASIC;
-        parser_eat(parser, TOKEN_TYPE_BOOL);
-    }
     else if (parser->current_token.type == TOKEN_IDENTIFIER)
     {
         type->name = strdup(parser->current_token.text);
@@ -69,7 +63,6 @@ Type *parse_atomic_type(Parser *parser)
         if (parser->current_token.type == TOKEN_IDENTIFIER ||
             parser->current_token.type == TOKEN_TYPE_NUMBER ||
             parser->current_token.type == TOKEN_TYPE_STRING ||
-            parser->current_token.type == TOKEN_TYPE_BOOL ||
             parser->current_token.type == TOKEN_LPAREN) // Extend as needed
         {
             // Parse type parameters recursively
@@ -497,7 +490,6 @@ ASTNode *parse_adt_definition(Parser *parser)
         while (
             parser->current_token.type == TOKEN_TYPE_NUMBER ||
             parser->current_token.type == TOKEN_TYPE_STRING ||
-            parser->current_token.type == TOKEN_TYPE_BOOL ||
             parser->current_token.type == TOKEN_IDENTIFIER ||
             parser->current_token.type == TOKEN_LPAREN)
         {
@@ -680,8 +672,6 @@ const char *ast_node_type_to_string(ASTNodeType type)
         return "Number";
     case AST_STRING:
         return "String";
-    case AST_BOOL:
-        return "Bool";
     case AST_BINOP:
         return "Binary Operation";
     case AST_VARIABLE:

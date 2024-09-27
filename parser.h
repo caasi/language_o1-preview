@@ -7,7 +7,6 @@ typedef enum
 {
     AST_NUMBER,
     AST_STRING,
-    AST_BOOL,
     AST_BINOP,
     AST_VARIABLE,
     AST_FUNCTION_DEF,
@@ -42,7 +41,6 @@ typedef struct ASTNode
     {
         double number;      // For AST_NUMBER
         char *string_value; // For AST_STRING
-        int bool_value;     // For AST_BOOL
         struct
         {
             struct ASTNode *left;
