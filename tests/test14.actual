@@ -1,1 +1,2 @@
-Error: Expected ';' or end of input after statement
+Error: Expected ';' or end of input after statement, instead of a 13 token
+Unknown node type: 8

@@ -348,6 +348,10 @@ ASTNode *parse_expression(Parser *parser)
     {
         node = parse_if_expression(parser);
     }
+    else if (parser->current_token.type == TOKEN_IDENTIFIER)
+    {
+        node = parse_adt_constructor(parser);
+    }
     else
     {
         node = parse_comparison(parser);
@@ -417,8 +421,8 @@ ASTNode *parse_adt_definition(Parser *parser)
 
         // Check if constructor has fields (e.g., Just a)
         if (parser->current_token.type == TOKEN_IDENTIFIER ||
-            parser->current_token.type == TOKEN_NUMBER ||
-            parser->current_token.type == TOKEN_STRING ||
+            parser->current_token.type == TOKEN_TYPE_NUMBER ||
+            parser->current_token.type == TOKEN_TYPE_STRING ||
             parser->current_token.type == TOKEN_LPAREN)
         { // Extend as needed
             // Parse field type
@@ -666,6 +670,33 @@ void print_ast(ASTNode *node, int indent)
         break;
     }
 
+    case AST_ADT_CONSTRUCTOR:
+    {
+        printf("ADT Constructor: %s\n", node->adt_constructor.constructor);
+        // Print arguments
+        for (int i = 0; i < node->adt_constructor.arg_count; i++)
+        {
+            for (int j = 0; j < indent + 1; j++)
+            {
+                printf("  ");
+            }
+            printf("Argument %d:\n", i + 1);
+            print_ast(node->adt_constructor.arguments[i], indent + 2);
+        }
+        break;
+    }
+
+    case AST_ADT_DEFINITION:
+    {
+        printf("ADT Definition: %s\n", node->adt_definition.type_name);
+        // Print constructors
+        for (int i = 0; i < node->adt_definition.constructor_count; i++)
+        {
+            print_ast(node->adt_definition.constructors[i], indent + 1);
+        }
+        break;
+    }
+
     case AST_LET_BINDING:
     {
         printf("Let Binding: %s\n", node->let_binding.name);
@@ -863,6 +894,11 @@ ASTNode *parse_statement_list(Parser *parser)
     // Allocate initial space for statements
     int capacity = 10; // Adjust as needed
     statements = malloc(sizeof(ASTNode *) * capacity);
+    if (!statements)
+    {
+        fprintf(stderr, "Error: Memory allocation failed for statement list\n");
+        exit(EXIT_FAILURE);
+    }
 
     // Parse statements separated by semicolons
     while (parser->current_token.type != TOKEN_EOF)
@@ -884,7 +920,8 @@ ASTNode *parse_statement_list(Parser *parser)
         }
         else if (parser->current_token.type != TOKEN_EOF)
         {
-            fprintf(stderr, "Error: Expected ';' or end of input after statement\n");
+            fprintf(stderr, "Error: Expected ';' or end of input after statement, but got token type %d\n", parser->current_token.type);
+            print_ast(stmt, 0);
             exit(EXIT_FAILURE);
         }
     }
@@ -909,6 +946,10 @@ ASTNode *parse_statement(Parser *parser)
     {
         // Let binding
         return parse_let_binding(parser);
+    }
+    else if (parser->current_token.type == TOKEN_TYPE)
+    {
+        return parse_adt_definition(parser);
     }
     else
     {

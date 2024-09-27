@@ -144,16 +144,6 @@ Token lexer_get_next_token(Lexer *lexer)
             return lexer_get_identifier(lexer);
         }
 
-        if (strncmp(lexer->text + lexer->pos, "type", 4) == 0 && !isalnum(lexer->text[lexer->pos + 4]))
-        {
-            // TODO: add a parameter to specify the length to advance
-            for (int i = 0; i < 4; i++)
-            {
-                lexer_advance(lexer);
-            }
-            return (Token){TOKEN_TYPE, 0, NULL};
-        }
-
         // Handle '|'
         if (lexer->current_char == '|')
         {
@@ -290,6 +280,10 @@ Token lexer_get_identifier(Lexer *lexer)
     buffer[i] = '\0';
 
     // Check for keywords
+    if (strcmp(buffer, "type") == 0)
+    {
+        return (Token){TOKEN_TYPE, 0, NULL};
+    }
     if (strcmp(buffer, "Number") == 0)
     {
         return (Token){TOKEN_TYPE_NUMBER, 0, NULL};
