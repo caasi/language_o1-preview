@@ -496,7 +496,7 @@ ASTNode *parse_adt_constructor_call(Parser *parser)
         arguments[arg_count++] = arg;
     }
 
-    // Create the ADT constructor node
+    // Create the ADT constructor call node
     ASTNode *constructor_call = malloc(sizeof(ASTNode));
     if (!constructor_call)
     {
@@ -595,7 +595,7 @@ void free_ast(ASTNode *node)
     default:
     {
         const char *got = ast_node_type_to_string(node->type);
-        fprintf(stderr, "Error: Unknown AST node type '%s' in free_ast\n", got);
+        fprintf(stderr, "Error: Unknown AST node type '%s (%d)' in free_ast\n", got, node->type);
         exit(EXIT_FAILURE);
     }
     }
