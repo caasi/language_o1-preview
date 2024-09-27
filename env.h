@@ -46,6 +46,9 @@ struct Env
     struct Env *parent; // Pointer to parent environment (for scoping)
 };
 
+const char *value_type_to_string(ValueType type);
+void print_value(Value *value);
+
 Env *env_create(Env *parent);
 void env_define(Env *env, const char *name, Value *value, int is_owned);
 Value *env_lookup(Env *env, const char *name);

@@ -7,22 +7,22 @@
 
 int main()
 {
-    char line[1024];
-
-    // Read input from stdin
-    size_t len = fread(line, 1, sizeof(line) - 1, stdin);
-    if (len == 0 && ferror(stdin))
+    // Read the input program (for simplicity, read form stdin)
+    fseek(stdin, 0, SEEK_END);
+    long length = ftell(stdin);
+    fseek(stdin, 0, SEEK_SET);
+    char *program_text = malloc(length + 1);
+    if (!program_text)
     {
-        fprintf(stderr, "Error reading input\n");
+        fprintf(stderr, "Error: Memory allocation failed for program text\n");
         return EXIT_FAILURE;
     }
-    line[len] = '\0'; // Null-terminate the string
+    fread(program_text, 1, length, stdin);
+    program_text[length] = '\0';
 
     // Initialize lexer and parser
-    Lexer lexer = lexer_create(line);
+    Lexer lexer = lexer_create(program_text);
     Parser parser = parser_create(lexer);
-
-    // Parse the input and build the AST
     ASTNode *ast = parse_statement_list(&parser);
 
     // Ensure the entire input was consumed
@@ -41,22 +41,23 @@ int main()
     // Evaluate the AST
     Value *result = evaluate(ast, global_env, sym_table, 0);
 
-    // Output the result if it's a number
-    if (result->type == VAL_NUMBER)
+    // Output the result
+    if (result != NULL)
     {
-        printf("%lf\n", result->number);
+        print_value(result);
+        printf("\n");
+        free_value(result);
     }
     else
     {
-        printf("Result is not a number.\n");
-        print_ast(ast, 0);
+        printf("No result.\n");
     }
 
     // Clean up
+    free(program_text);
     free_ast(ast);
+    symbol_table_free(sym_table);
     env_destroy(global_env);
-    free_value(result);
-    // Free the result if needed
 
     return EXIT_SUCCESS;
 }

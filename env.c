@@ -1,5 +1,68 @@
 #include <string.h>
+#include <stdio.h>
 #include "env.h"
+
+const char *value_type_to_string(ValueType type)
+{
+    switch (type)
+    {
+    case VAL_NUMBER:
+        return "Number";
+    case VAL_STRING:
+        return "String";
+    case VAL_BOOL:
+        return "Bool";
+    case VAL_FUNCTION:
+        return "Function";
+    case VAL_ADT:
+        return "ADT";
+    default:
+        return "Unknown";
+    }
+}
+
+void print_value(Value *val)
+{
+    if (val == NULL)
+    {
+        printf("null");
+        return;
+    }
+
+    switch (val->type)
+    {
+    case VAL_NUMBER:
+        printf("%lf", val->number);
+        break;
+    case VAL_STRING:
+        printf("\"%s\"", val->string_value);
+        break;
+    case VAL_FUNCTION:
+        printf("Function");
+        break;
+    case VAL_BOOL:
+        printf("%s", val->bool_value ? "True" : "False");
+        break;
+    case VAL_ADT:
+        printf("%s", val->adt.constructor);
+        if (val->adt.field_count > 0)
+        {
+            printf(" (");
+            for (int i = 0; i < val->adt.field_count; i++)
+            {
+                print_value(val->adt.fields[i]);
+                if (i < val->adt.field_count - 1)
+                    printf(", ");
+            }
+            printf(")");
+        }
+        break;
+    // ... handle other value types as needed ...
+    default:
+        printf("Unknown value type '%s'", value_type_to_string(val->type));
+        break;
+    }
+}
 
 Env *env_create(Env *parent)
 {
@@ -63,7 +126,8 @@ void free_value(Value *value)
     if (value == NULL)
         return;
 
-    if (value->is_shared) {
+    if (value->is_shared)
+    {
         // Do not free shared values
         return;
     }
@@ -72,7 +136,8 @@ void free_value(Value *value)
     {
         // Free function-related data if needed
         // For simplicity, we might not need to free anything here
-    } else if (value->type == VAL_STRING)
+    }
+    else if (value->type == VAL_STRING)
     {
         free(value->string_value);
     }
