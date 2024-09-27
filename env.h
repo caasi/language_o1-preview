@@ -6,7 +6,6 @@ typedef enum
 {
     VAL_NUMBER,
     VAL_STRING,
-    VAL_BOOL,
     VAL_FUNCTION,
     VAL_ADT
 } ValueType;

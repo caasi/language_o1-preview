@@ -11,8 +11,6 @@ const char *value_type_to_string(ValueType type)
         return "Number";
     case VAL_STRING:
         return "String";
-    case VAL_BOOL:
-        return "Bool";
     case VAL_FUNCTION:
         return "Function";
     case VAL_ADT:
@@ -50,12 +48,6 @@ void print_value(Value *val, int indent, int newline)
     case VAL_FUNCTION:
         print_indentation(indent);
         printf("Function");
-        if (newline)
-            printf("\n");
-        break;
-    case VAL_BOOL:
-        print_indentation(indent);
-        printf("%s", val->bool_value ? "True" : "False");
         if (newline)
             printf("\n");
         break;
