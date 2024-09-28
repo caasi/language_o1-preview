@@ -52,6 +52,10 @@ const char *token_type_to_string(TokenType type)
         return "Then Keyword";
     case TOKEN_KEYWORD_ELSE:
         return "Else Keyword";
+    case TOKEN_KEYWORD_CASE:
+        return "Case Keyword";
+    case TOKEN_KEYWORD_OF:
+        return "Of Keyword";
     case TOKEN_EQUAL_EQUAL:
         return "Equal Equal";
     case TOKEN_NOT_EQUAL:
@@ -66,6 +70,8 @@ const char *token_type_to_string(TokenType type)
         return "Greater Than or Equal";
     case TOKEN_ARROW:
         return "Arrow";
+    case TOKEN_FAT_ARROW:
+        return "Fat Arrow";
     case TOKEN_COMMA:
         return "Comma";
     case TOKEN_SEMICOLON:
@@ -278,6 +284,13 @@ Token lexer_get_next_token(Lexer *lexer)
                 lexer_advance(lexer); // Skip second '='
                 return (Token){TOKEN_EQUAL_EQUAL, 0, NULL};
             }
+            // Handle '=>' (FAT_ARROW)
+            else if (lexer_peek(lexer) == '>')
+            {
+                lexer_advance(lexer); // Skip '='
+                lexer_advance(lexer); // Skip '>'
+                return (Token){TOKEN_FAT_ARROW, 0, NULL};
+            }
             else
             {
                 lexer_advance(lexer);
@@ -394,6 +407,14 @@ Token lexer_get_identifier(Lexer *lexer)
     else if (strcmp(buffer, "else") == 0)
     {
         return (Token){TOKEN_KEYWORD_ELSE, 0, NULL};
+    }
+    else if (strcmp(buffer, "case") == 0)
+    {
+        return (Token){TOKEN_KEYWORD_CASE, 0, NULL};
+    }
+    else if (strcmp(buffer, "of") == 0)
+    {
+        return (Token){TOKEN_KEYWORD_OF, 0, NULL};
     }
     else
     {

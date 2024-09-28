@@ -203,6 +203,44 @@ void print_type(Type *type, int indent)
     }
 }
 
+void free_pattern(Pattern *pattern)
+{
+    if (pattern == NULL)
+        return;
+
+    free(pattern->constructor);
+    free(pattern->variable);
+    free_ast(pattern->result_expr);
+    free(pattern);
+}
+
+void print_pattern(Pattern *pattern, int indent)
+{
+    if (pattern == NULL)
+        return;
+
+    // Print indentation spaces
+    print_indentation(indent);
+
+    // Print the pattern constructor
+    printf("%s", pattern->constructor);
+
+    // Print the variable if any
+    if (pattern->variable)
+    {
+        printf(" %s", pattern->variable);
+    }
+
+    // Print the result expression if any
+    if (pattern->result_expr)
+    {
+        printf(" => ");
+        print_ast(pattern->result_expr, 0); // Recursive call with zero indent
+    }
+
+    printf("\n");
+}
+
 ASTNode *parse_string(Parser *parser)
 {
     ASTNode *node = malloc(sizeof(ASTNode));
@@ -406,7 +444,11 @@ ASTNode *parse_expression(Parser *parser)
 {
     ASTNode *node;
 
-    if (parser->current_token.type == TOKEN_KEYWORD_LET)
+    if (parser->current_token.type == TOKEN_KEYWORD_CASE)
+    {
+        node = parse_case_expression(parser);
+    }
+    else if (parser->current_token.type == TOKEN_KEYWORD_LET)
     {
         node = parse_let_binding(parser);
     }
@@ -653,6 +695,14 @@ void free_ast(ASTNode *node)
         free_ast(node->if_expr.then_branch);
         free_ast(node->if_expr.else_branch);
         break;
+    case AST_CASE_EXPR:
+        free_ast(node->case_expr.expression);
+        for (int i = 0; i < node->case_expr.pattern_count; i++)
+        {
+            free_pattern(node->case_expr.patterns[i]);
+        }
+        free(node->case_expr.patterns);
+        break;
     default:
     {
         const char *got = ast_node_type_to_string(node->type);
@@ -692,6 +742,8 @@ const char *ast_node_type_to_string(ASTNodeType type)
         return "Statement List";
     case AST_IF_EXPR:
         return "If Expression";
+    case AST_CASE_EXPR:
+        return "Case Expression";
     default:
         return "Unknown";
     }
@@ -847,6 +899,22 @@ void print_ast(ASTNode *node, int indent)
         print_indentation(indent + 1);
         printf("Else Branch:\n");
         print_ast(node->if_expr.else_branch, indent + 2);
+        break;
+    }
+
+    case AST_CASE_EXPR:
+    {
+        printf("Case Expression:\n");
+        print_indentation(indent + 1);
+        printf("Expression:\n");
+        print_ast(node->case_expr.expression, indent + 2);
+        // Print patterns
+        for (int i = 0; i < node->case_expr.pattern_count; i++)
+        {
+            print_indentation(indent + 1);
+            printf("Pattern %d:\n", i + 1);
+            print_pattern(node->case_expr.patterns[i], indent + 2);
+        }
         break;
     }
 
@@ -1065,4 +1133,98 @@ ASTNode *parse_statement(Parser *parser)
         // Expression
         return parse_expression(parser);
     }
+}
+
+ASTNode *parse_case_expression(Parser *parser)
+{
+    ASTNode *case_node = malloc(sizeof(ASTNode));
+    if (!case_node)
+    {
+        fprintf(stderr, "Error: Memory allocation failed for case expression\n");
+        exit(EXIT_FAILURE);
+    }
+    case_node->type = AST_CASE_EXPR;
+
+    parser_eat(parser, TOKEN_KEYWORD_CASE); // Consume 'case'
+
+    case_node->case_expr.expression = parse_expression(parser); // Parse the expression to match
+
+    parser_eat(parser, TOKEN_KEYWORD_OF); // Consume 'of'
+
+    // Initialize patterns
+    case_node->case_expr.patterns = NULL;
+    case_node->case_expr.pattern_count = 0;
+
+    // Parse patterns
+    while (parser->current_token.type != TOKEN_EOF &&
+           parser->current_token.type != TOKEN_KEYWORD_END &&
+           parser->current_token.type != TOKEN_KEYWORD_ELSE) // Adjust based on your syntax
+    {
+        // Allocate memory for a new pattern
+        case_node->case_expr.patterns =
+            realloc(case_node->case_expr.patterns, sizeof(Pattern *) * (case_node->case_expr.pattern_count + 1));
+        if (!case_node->case_expr.patterns)
+        {
+            fprintf(stderr, "Error: Memory allocation failed for patterns\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Allocate memory for the new Pattern struct
+        Pattern *new_pattern = malloc(sizeof(Pattern));
+        if (!new_pattern)
+        {
+            fprintf(stderr, "Error: Memory allocation failed for a pattern\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Initialize the new Pattern
+        new_pattern->constructor = NULL;
+        new_pattern->variable = NULL;
+        new_pattern->result_expr = NULL;
+
+        // Assign to the patterns array
+        case_node->case_expr.patterns[case_node->case_expr.pattern_count] = new_pattern;
+        case_node->case_expr.pattern_count++;
+
+        // Parse Constructor
+        if (parser->current_token.type != TOKEN_IDENTIFIER)
+        {
+            fprintf(stderr, "Error: Expected constructor in case pattern\n");
+            exit(EXIT_FAILURE);
+        }
+        new_pattern->constructor = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_IDENTIFIER);
+
+        // Parse Variable
+        if (parser->current_token.type != TOKEN_IDENTIFIER)
+        {
+            fprintf(stderr, "Error: Expected variable in case pattern\n");
+            exit(EXIT_FAILURE);
+        }
+        new_pattern->variable = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_IDENTIFIER);
+
+        // Parse '=>'
+        if (parser->current_token.type != TOKEN_FAT_ARROW)
+        {
+            fprintf(stderr, "Error: Expected '=>' in case pattern\n");
+            exit(EXIT_FAILURE);
+        }
+        parser_eat(parser, TOKEN_FAT_ARROW);
+
+        // Parse Result Expression
+        new_pattern->result_expr = parse_expression(parser);
+
+        // Parse '|', if present
+        if (parser->current_token.type == TOKEN_PIPE)
+        {
+            parser_eat(parser, TOKEN_PIPE);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return case_node;
 }

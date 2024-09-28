@@ -1,0 +1,8 @@
+type Maybe = Just Number | Nothing;
+
+fun describe m =
+    case m of
+      Just n => n
+    | Nothing => 0;
+
+describe(Just 10);

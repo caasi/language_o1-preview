@@ -305,6 +305,43 @@ Value *evaluate(ASTNode *node, Env *env, SymbolTable *sym_table, int depth)
 
         return result;
     }
+    case AST_CASE_EXPR:
+    {
+        Value *matched_value = evaluate(node->case_expr.expression, env, sym_table, depth + 1);
+
+        if (matched_value->type != VAL_ADT)
+        {
+            fprintf(stderr, "Error: Case expression requires an ADT value\n");
+            exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < node->case_expr.pattern_count; i++)
+        {
+            Pattern *pattern = node->case_expr.patterns[i];
+            if (strcmp(pattern->constructor, matched_value->adt.constructor) == 0)
+            {
+                // Bind the variable to the ADT's fields (assuming single field for simplicity)
+                if (matched_value->adt.field_count > 1)
+                {
+                    fprintf(stderr, "Error: Pattern matching currently supports single field constructors\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                Env *new_env = env_create(env);
+                if (matched_value->adt.field_count == 1)
+                {
+                    env_define(new_env, pattern->variable, matched_value->adt.fields[0], 0);
+                }
+
+                Value *result = evaluate(pattern->result_expr, new_env, sym_table, depth + 1);
+                env_destroy(new_env);
+                return result;
+            }
+        }
+
+        fprintf(stderr, "Error: No matching pattern found in case expression\n");
+        exit(EXIT_FAILURE);
+    }
     default:
     {
         const char *got = ast_node_type_to_string(node->type);

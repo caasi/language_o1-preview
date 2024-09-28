@@ -17,6 +17,7 @@ typedef enum
     AST_LET_BINDING,
     AST_STATEMENT_LIST,
     AST_IF_EXPR,
+    AST_CASE_EXPR,
 } ASTNodeType;
 
 typedef struct Type
@@ -33,6 +34,13 @@ typedef struct Type
     struct Type **params; // Type parameters for polymorphism (if needed)
     int param_count;
 } Type;
+
+typedef struct Pattern
+{
+    char *constructor;           // Constructor name
+    char *variable;              // Variable to bind
+    struct ASTNode *result_expr; // Result expression
+} Pattern;                       // Array of patterns
 
 typedef struct ASTNode
 {
@@ -100,6 +108,12 @@ typedef struct ASTNode
             struct ASTNode *then_branch;
             struct ASTNode *else_branch;
         } if_expr;
+        struct
+        {
+            struct ASTNode *expression; // Expression to match
+            Pattern **patterns;         // Array of patterns
+            int pattern_count;
+        } case_expr;
     };
 } ASTNode;
 
@@ -117,6 +131,9 @@ Type *parse_atomic_type(Parser *parser);
 void free_type(Type *type);
 void print_type(Type *type, int indent);
 
+void free_pattern(Pattern *pattern);
+void print_pattern(Pattern *pattern, int indent);
+
 ASTNode *parse_term(Parser *parser);
 ASTNode *parse_string(Parser *parser);
 ASTNode *parse_if_expression(Parser *parser);
@@ -132,6 +149,7 @@ ASTNode *parse_function_application(Parser *parser, char *func_name);
 ASTNode *parse_let_binding(Parser *parser);
 ASTNode *parse_statement_list(Parser *parser);
 ASTNode *parse_statement(Parser *parser);
+ASTNode *parse_case_expression(Parser *parser);
 
 void free_ast(ASTNode *node);
 const char *ast_node_type_to_string(ASTNodeType type);

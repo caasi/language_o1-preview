@@ -7,26 +7,28 @@ typedef enum
 {
     TOKEN_NUMBER,
     TOKEN_STRING,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_MUL,
-    TOKEN_DIV,
-    TOKEN_LPAREN,
-    TOKEN_RPAREN,
+    TOKEN_PLUS,   // '+'
+    TOKEN_MINUS,  // '-'
+    TOKEN_MUL,    // '*'
+    TOKEN_DIV,    // '/'
+    TOKEN_LPAREN, // '('
+    TOKEN_RPAREN, // ')'
     TOKEN_IDENTIFIER,
-    TOKEN_TYPE,        // 'type' keyword
-    TOKEN_PIPE,        // '|'
-    TOKEN_LBRACE,      // '{'
-    TOKEN_RBRACE,      // '}'
-    TOKEN_TYPE_NUMBER, // 'Number'
-    TOKEN_TYPE_STRING, // 'String'
-    TOKEN_KEYWORD_FUN,
-    TOKEN_KEYWORD_LET,
-    TOKEN_KEYWORD_IN,
-    TOKEN_KEYWORD_END,
-    TOKEN_KEYWORD_IF,
-    TOKEN_KEYWORD_THEN,
-    TOKEN_KEYWORD_ELSE,
+    TOKEN_TYPE,          // 'type' keyword
+    TOKEN_PIPE,          // '|'
+    TOKEN_LBRACE,        // '{'
+    TOKEN_RBRACE,        // '}'
+    TOKEN_TYPE_NUMBER,   // 'Number'
+    TOKEN_TYPE_STRING,   // 'String'
+    TOKEN_KEYWORD_FUN,   // 'fun'
+    TOKEN_KEYWORD_LET,   // 'let'
+    TOKEN_KEYWORD_IN,    // 'in'
+    TOKEN_KEYWORD_END,   // 'end'
+    TOKEN_KEYWORD_IF,    // 'if'
+    TOKEN_KEYWORD_THEN,  // 'then'
+    TOKEN_KEYWORD_ELSE,  // 'else'
+    TOKEN_KEYWORD_CASE,  // 'case'
+    TOKEN_KEYWORD_OF,    // 'of'
     TOKEN_EQUAL_EQUAL,   // '=='
     TOKEN_NOT_EQUAL,     // '!='
     TOKEN_LESS,          // '<'
@@ -34,6 +36,7 @@ typedef enum
     TOKEN_GREATER,       // '>'
     TOKEN_GREATER_EQUAL, // '>='
     TOKEN_ARROW,         // '->'
+    TOKEN_FAT_ARROW,     // '=>'
     TOKEN_COMMA,         // ','
     TOKEN_SEMICOLON,     // ';'
     TOKEN_EQUAL,         // '='
