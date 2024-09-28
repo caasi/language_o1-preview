@@ -1195,14 +1195,16 @@ ASTNode *parse_case_expression(Parser *parser)
         new_pattern->constructor = strdup(parser->current_token.text);
         parser_eat(parser, TOKEN_IDENTIFIER);
 
-        // Parse Variable
-        if (parser->current_token.type != TOKEN_IDENTIFIER)
+        // Parse Variable (Optional)
+        if (parser->current_token.type == TOKEN_IDENTIFIER)
         {
-            fprintf(stderr, "Error: Expected variable in case pattern\n");
-            exit(EXIT_FAILURE);
+            new_pattern->variable = strdup(parser->current_token.text);
+            parser_eat(parser, TOKEN_IDENTIFIER);
         }
-        new_pattern->variable = strdup(parser->current_token.text);
-        parser_eat(parser, TOKEN_IDENTIFIER);
+        else
+        {
+            new_pattern->variable = NULL; // No variable to bind
+        }
 
         // Parse '=>'
         if (parser->current_token.type != TOKEN_FAT_ARROW)

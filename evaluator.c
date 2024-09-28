@@ -320,17 +320,21 @@ Value *evaluate(ASTNode *node, Env *env, SymbolTable *sym_table, int depth)
             Pattern *pattern = node->case_expr.patterns[i];
             if (strcmp(pattern->constructor, matched_value->adt.constructor) == 0)
             {
-                // Bind the variable to the ADT's fields (assuming single field for simplicity)
-                if (matched_value->adt.field_count > 1)
-                {
-                    fprintf(stderr, "Error: Pattern matching currently supports single field constructors\n");
-                    exit(EXIT_FAILURE);
-                }
-
                 Env *new_env = env_create(env);
-                if (matched_value->adt.field_count == 1)
+
+                // **Bind Variable Only If It Exists**
+                if (pattern->variable != NULL)
                 {
-                    env_define(new_env, pattern->variable, matched_value->adt.fields[0], 0);
+                    // Assuming single field constructors
+                    if (matched_value->adt.field_count == 1)
+                    {
+                        env_define(new_env, pattern->variable, matched_value->adt.fields[0], 0);
+                    }
+                    else
+                    {
+                        fprintf(stderr, "Error: Pattern matching currently supports single field constructors\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
 
                 Value *result = evaluate(pattern->result_expr, new_env, sym_table, depth + 1);
