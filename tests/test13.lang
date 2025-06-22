@@ -1,4 +1,4 @@
-fun app f, x = f(x);
-fun inc x = x + 1;
-app(inc, 2);
+let app = \f. \x. f x
+let inc = \x. (+) x 1
+app inc 2
 

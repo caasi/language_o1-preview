@@ -1,4 +1,1 @@
-if 0 then
-    1
-else
-    2;
+case 0 of True -> 1; False -> 2

@@ -1,6 +1,4 @@
-type Address = Address String Number;
-type Person = Person String Address;
+type Address = Address String Number
+type Person = Person String Address
 
-let john = Person "John Doe" (Address "123 Main St" 5551234) in
-  john
-end;
+let john = Person "John Doe" (Address "123 Main St" 5551234) in john

@@ -1,4 +1,1 @@
-if "text" == "text" then
-    1
-else
-    0;
+case (==) "text" "text" of True -> 1; False -> 0

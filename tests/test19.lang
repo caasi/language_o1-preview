@@ -1,5 +1,3 @@
-type Maybe = Just Number | Nothing;
+type Maybe = Just Number | Nothing
 
-let res = UnknownConstructor 5 in
-  res
-end;
+let res = UnknownConstructor 5 in res

@@ -1,5 +1,3 @@
-type Point = Point Number Number;
+type Point = Point Number Number
 
-let p = Point 3 4 in
-  p
-end;
+let p = Point 3 4 in p

@@ -1,6 +1,4 @@
-type Maybe = Just Number | Nothing;
+type Maybe = Just Number | Nothing
 
-let value = Just 10 in
-  value
-end;
+let value = Just 10 in value
 
