@@ -1,8 +1,8 @@
 # languag o1-preview
 
-In this project, I am creating a small language with the help of OpenAI's o1-preview model. My goal is to change as little as possible and let the language model implement the language.
+In this project, I am creating a small language with the help of AI language models. Initially developed with OpenAI's o1-preview model, Claude Code is now taking over development and maintenance.
 
-You can check the conversation [here](https://chatgpt.com/share/66f3e88c-c714-8003-b36e-0220effd8bad).
+You can check the original conversation [here](https://chatgpt.com/share/66f3e88c-c714-8003-b36e-0220effd8bad).
 
 ## Overview
 
