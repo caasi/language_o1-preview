@@ -1,3 +1,26 @@
-*.o
-*.d
+# Executables
 lang
+core_demo
+
+# Object files
+*.o
+
+# Dependency files
+*.d
+
+# Debug symbols
+*.dSYM/
+
+# Temporary files
+*.swp
+*.tmp
+*.actual
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -42,6 +42,167 @@ typedef struct Pattern
     struct ASTNode *result_expr; // Result expression
 } Pattern;                       // Array of patterns
 
+// ============================================================================
+// GHC Core AST Structures (Phase 1 - alongside existing AST)
+// ============================================================================
+
+typedef enum
+{
+    CORE_VAR,       // Variables and data constructors  
+    CORE_LIT,       // Primitive literals
+    CORE_APP,       // Function/constructor application
+    CORE_LAM,       // Lambda abstraction
+    CORE_LET,       // Let bindings (rec/non-rec)
+    CORE_CASE,      // Case expressions
+    CORE_CAST,      // Type coercions (simplified)
+    CORE_TICK,      // Source annotations (optional)
+    CORE_TYPE,      // Type expressions
+    CORE_COERCION   // Type equality (simplified)
+} CoreExprType;
+
+typedef struct CoreType
+{
+    enum {
+        CORE_TYPE_VAR,      // Type variables (α, β)
+        CORE_TYPE_CON,      // Type constructors (Int, Bool, →)
+        CORE_TYPE_APP,      // Type application
+        CORE_TYPE_FORALL    // Universal quantification (∀α.τ)
+    } kind;
+    union {
+        char *var_name;     // For type variables
+        char *con_name;     // For type constructors
+        struct {
+            struct CoreType *fun;
+            struct CoreType *arg;
+        } app;              // For type application
+        struct {
+            char *var;
+            struct CoreType *body;
+        } forall;           // For ∀α.τ
+    };
+} CoreType;
+
+typedef struct CoreVar
+{
+    char *name;             // Variable name
+    CoreType *type;         // Variable type (optional for now)
+    enum {
+        VAR_LOCAL,          // Local variable
+        VAR_GLOBAL,         // Global variable
+        VAR_DATA_CON        // Data constructor
+    } var_kind;
+} CoreVar;
+
+typedef struct CoreLit
+{
+    enum {
+        LIT_INT,            // Integer literals
+        LIT_DOUBLE,         // Double literals  
+        LIT_STRING,         // String literals
+        LIT_CHAR            // Character literals
+    } lit_kind;
+    union {
+        int int_val;
+        double double_val;
+        char *string_val;
+        char char_val;
+    };
+} CoreLit;
+
+typedef struct CoreBind
+{
+    CoreVar *var;           // Bound variable
+    struct CoreExpr *expr;  // Bound expression
+} CoreBind;
+
+typedef struct CoreAlt
+{
+    enum {
+        ALT_CON,            // Constructor pattern
+        ALT_LIT,            // Literal pattern
+        ALT_DEFAULT         // Default pattern (_)
+    } alt_kind;
+    union {
+        struct {
+            char *constructor;      // Constructor name
+            CoreVar **vars;         // Bound variables
+            int var_count;
+        } con;
+        CoreLit *lit;              // Literal pattern
+    };
+    struct CoreExpr *expr;         // Alternative expression
+} CoreAlt;
+
+typedef struct CoreExpr
+{
+    CoreExprType expr_type;
+    union {
+        CoreVar *var;              // CORE_VAR
+        CoreLit *lit;              // CORE_LIT
+        struct {                   // CORE_APP
+            struct CoreExpr *fun;
+            struct CoreExpr *arg;
+        } app;
+        struct {                   // CORE_LAM
+            CoreVar *var;
+            struct CoreExpr *body;
+        } lam;
+        struct {                   // CORE_LET
+            CoreBind **binds;      // Array of bindings
+            int bind_count;
+            struct CoreExpr *body;
+            int is_recursive;      // 1 for letrec, 0 for let
+        } let;
+        struct {                   // CORE_CASE
+            struct CoreExpr *expr;
+            CoreVar *var;          // Case binder (optional)
+            CoreType *type;        // Result type
+            CoreAlt **alts;        // Alternatives
+            int alt_count;
+        } case_expr;
+        struct {                   // CORE_CAST
+            struct CoreExpr *expr;
+            CoreType *from_type;
+            CoreType *to_type;
+        } cast;
+        struct {                   // CORE_TICK
+            char *tick_info;       // Tick annotation
+            struct CoreExpr *expr;
+        } tick;
+        CoreType *type;            // CORE_TYPE
+        struct {                   // CORE_COERCION
+            CoreType *from_type;
+            CoreType *to_type;
+        } coercion;
+    };
+} CoreExpr;
+
+// Core AST Functions
+CoreExpr *core_expr_create_var(CoreVar *var);
+CoreExpr *core_expr_create_lit(CoreLit *lit);
+CoreExpr *core_expr_create_app(CoreExpr *fun, CoreExpr *arg);
+CoreExpr *core_expr_create_lam(CoreVar *var, CoreExpr *body);
+CoreExpr *core_expr_create_let(CoreBind **binds, int bind_count, CoreExpr *body, int is_recursive);
+CoreExpr *core_expr_create_case(CoreExpr *expr, CoreVar *var, CoreType *type, CoreAlt **alts, int alt_count);
+
+CoreVar *core_var_create(char *name, CoreType *type, int var_kind);
+CoreLit *core_lit_create_int(int val);
+CoreLit *core_lit_create_double(double val);
+CoreLit *core_lit_create_string(char *val);
+CoreBind *core_bind_create(CoreVar *var, CoreExpr *expr);
+CoreAlt *core_alt_create_con(char *constructor, CoreVar **vars, int var_count, CoreExpr *expr);
+CoreAlt *core_alt_create_default(CoreExpr *expr);
+
+void core_expr_free(CoreExpr *expr);
+void core_type_free(CoreType *type);
+void core_var_free(CoreVar *var);
+void core_lit_free(CoreLit *lit);
+void core_bind_free(CoreBind *bind);
+void core_alt_free(CoreAlt *alt);
+
+void core_expr_print(CoreExpr *expr, int indent);
+const char *core_expr_type_to_string(CoreExprType type);
+
 typedef struct ASTNode
 {
     ASTNodeType type;
