@@ -88,26 +88,98 @@ The language is being transformed into a GHC Core language implementation:
 - [ ] Update parser for GHC Core constructs
 - [ ] Add support for primitive types and literals
 
-### GHC Core Language Features
+## Migration Plan: ML-style Language → GHC Core
 
-GHC Core is an intermediate representation using System FC with these main expression constructors:
+### Current Language Analysis
 
-1. **Core Expression Types:**
-   - `Var`: Variable references and identifiers
-   - `Lit`: Primitive literals (integers, strings, etc.)
-   - `App`: Function application
-   - `Lam`: Lambda abstraction
-   - `Let`: Recursive and non-recursive bindings
-   - `Case`: Pattern matching and evaluation
-   - `Cast`: Type conversions (newtypes, GADTs)
-   - `Tick`: Source annotations (profiling, debugging)
-   - `Type`: Type-level expressions
-   - `Coercion`: Type equality proofs
+Based on analysis of 21 test files, the current language supports:
 
-2. **Key Features:**
-   - System FC (System F + type equality coercions)
-   - Supports type and value arguments
-   - Levity polymorphism support
-   - Source location preservation
-   - Intermediate representation for optimization
+**Core Features:**
+- **Primitives**: Numbers (doubles), strings, functions as first-class values
+- **Operations**: Arithmetic (`+`, `-`, `*`, `/`), comparison (`==`)
+- **Control Flow**: `if-then-else` conditionals
+- **Bindings**: `let-in-end` expressions with lexical scoping
+- **Functions**: ML-style `fun name params = body;` with recursion and higher-order functions
+- **ADTs**: Sum/product types with constructors (`type T = C1 | C2 T2`)
+- **Pattern Matching**: `case-of` expressions with constructor patterns
+- **Error Handling**: Division by zero, stack overflow, arity checking
+
+### Migration Strategy
+
+#### Phase 1: Core AST Transformation
+**Replace current AST with GHC Core expressions:**
+
+```c
+// Current: 21 AST node types (AST_NUMBER, AST_BINOP, AST_FUNCTION_DEF, etc.)
+// Target: 10 Core expression types
+
+typedef enum {
+    CORE_VAR,      // Variables and data constructors  
+    CORE_LIT,      // Primitive literals
+    CORE_APP,      // Function/constructor application
+    CORE_LAM,      // Lambda abstraction
+    CORE_LET,      // Let bindings (rec/non-rec)
+    CORE_CASE,     // Case expressions
+    CORE_CAST,     // Type coercions (simplified)
+    CORE_TICK,     // Source annotations (optional)
+    CORE_TYPE,     // Type expressions
+    CORE_COERCION  // Type equality (simplified)
+} CoreExprType;
+```
+
+#### Phase 2: Syntax Transformation
+**Convert ML syntax to Core syntax:**
+
+| Current ML Syntax | Core Equivalent |
+|------------------|-----------------|
+| `fun f x = x + 1;` | `let f = λx. (+) x 1` |
+| `f(2, 3)` | `f 2 3` (curried application) |
+| `let x = 5 in x end` | `let x = 5 in x` |
+| `if c then a else b` | `case c of True → a; False → b` |
+| `Constructor arg` | `Constructor arg` (same, but as Var+App) |
+| `case x of C y => y` | `case x of C y → y` |
+
+#### Phase 3: Implementation Steps
+
+1. **✅ Research Analysis** - Completed
+2. **Design Core syntax** - Define Core expression grammar
+3. **Implement Core AST** - Replace parser.h structures
+4. **Update lexer** - Handle `λ`, `→`, type syntax
+5. **Update parser** - Parse Core expressions
+6. **Implement evaluator** - Core semantics
+7. **Add primitives** - Core literal types
+8. **Implement let bindings** - Recursive/non-recursive
+
+#### Phase 4: Feature Mapping
+
+**Functions:** `fun f x, y = x + y;` becomes:
+```
+let f = λx. λy. (+) x y
+```
+
+**ADTs:** `type Maybe = Just Number | Nothing;` becomes:
+```
+-- Data constructors become regular variables
+-- Just :: Number → Maybe Number  
+-- Nothing :: Maybe Number
+```
+
+**Pattern Matching:** Enhanced case expressions with exhaustiveness
+
+**Let Bindings:** Support both recursive (`letrec`) and non-recursive (`let`)
+
+### Expected Benefits
+
+1. **Simplification**: 21 AST nodes → 10 Core expressions
+2. **Uniformity**: Constructors and functions unified under App
+3. **Optimization Ready**: Core designed for transformations
+4. **Type System**: Foundation for advanced type features
+5. **Functional Purity**: Explicit lambda calculus representation
+
+### Compatibility Notes
+
+- **Syntax Change**: User syntax will change from ML-style to Core-style
+- **Semantics Preserved**: Same evaluation behavior for equivalent programs
+- **Test Migration**: All 21 tests need syntax updates but same expected outputs
+- **Performance**: Should be similar or better due to Core's optimization-friendly design
 
