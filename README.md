@@ -72,3 +72,42 @@ Alternatively, you can echo an expression into the program:
 echo "1 + 2 * (3 + 4)" | ./lang
 ```
 
+## GHC Core Implementation ToDos
+
+The language is being transformed into a GHC Core language implementation:
+
+### High Priority
+- [ ] Research current language features and identify what needs to be changed for GHC Core
+- [ ] Design GHC Core syntax (expressions with Var, Lit, App, Lam, Let, Case, Cast, Tick, Type, Coercion)
+- [ ] Implement Core expression data types and AST nodes
+- [ ] Implement Core evaluator/interpreter
+- [ ] Implement let bindings (recursive and non-recursive)
+
+### Medium Priority  
+- [ ] Update lexer to handle Core syntax (lambda, case, let, type annotations)
+- [ ] Update parser for GHC Core constructs
+- [ ] Add support for primitive types and literals
+
+### GHC Core Language Features
+
+GHC Core is an intermediate representation using System FC with these main expression constructors:
+
+1. **Core Expression Types:**
+   - `Var`: Variable references and identifiers
+   - `Lit`: Primitive literals (integers, strings, etc.)
+   - `App`: Function application
+   - `Lam`: Lambda abstraction
+   - `Let`: Recursive and non-recursive bindings
+   - `Case`: Pattern matching and evaluation
+   - `Cast`: Type conversions (newtypes, GADTs)
+   - `Tick`: Source annotations (profiling, debugging)
+   - `Type`: Type-level expressions
+   - `Coercion`: Type equality proofs
+
+2. **Key Features:**
+   - System FC (System F + type equality coercions)
+   - Supports type and value arguments
+   - Levity polymorphism support
+   - Source location preservation
+   - Intermediate representation for optimization
+
