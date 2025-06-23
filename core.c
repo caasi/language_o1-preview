@@ -607,6 +607,8 @@ double core_eval_simple(CoreExpr *expr) {
                             exit(EXIT_FAILURE);
                         }
                         return left / right;
+                    } else if (strcmp(op_name, "==") == 0) {
+                        return (left == right) ? 1.0 : 0.0;
                     }
                 }
                 
@@ -659,6 +661,33 @@ double core_eval_simple(CoreExpr *expr) {
             // Lambdas can't be evaluated to a number directly
             // This suggests we need a different evaluation strategy
             fprintf(stderr, "Error: Cannot evaluate lambda to number directly\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        case CORE_CASE: {
+            // Case evaluation: evaluate the scrutinee and match against patterns
+            // For now, implement a simple boolean case for True/False
+            
+            // First, evaluate the case expression (scrutinee)
+            double scrutinee_val = core_eval_simple(expr->case_expr.expr);
+            
+            // For boolean cases, treat 0.0 as False, non-zero as True
+            int is_true = (scrutinee_val != 0.0);
+            
+            // Look through alternatives to find a match
+            for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                CoreAlt *alt = expr->case_expr.alts[i];
+                if (alt->alt_kind == ALT_CON) {
+                    if ((is_true && strcmp(alt->con.constructor, "True") == 0) ||
+                        (!is_true && strcmp(alt->con.constructor, "False") == 0)) {
+                        // Found matching pattern, evaluate the result
+                        return core_eval_simple(alt->expr);
+                    }
+                }
+            }
+            
+            // No match found - this shouldn't happen with complete patterns
+            fprintf(stderr, "Error: No matching pattern in case expression\n");
             exit(EXIT_FAILURE);
         }
         
@@ -726,6 +755,27 @@ CoreExpr *core_substitute_simple(CoreExpr *expr, char *var_name, double value) {
             return core_let_simple(strdup(expr->let.binds[0]->var->name), binds_expr, body);
         }
         
+        case CORE_CASE: {
+            // Substitute in case expression and alternatives
+            CoreExpr *substituted_expr = core_substitute_simple(expr->case_expr.expr, var_name, value);
+            CoreAlt **substituted_alts = (CoreAlt **)malloc(expr->case_expr.alt_count * sizeof(CoreAlt *));
+            
+            for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                CoreAlt *orig_alt = expr->case_expr.alts[i];
+                CoreExpr *substituted_alt_expr = core_substitute_simple(orig_alt->expr, var_name, value);
+                
+                if (orig_alt->alt_kind == ALT_CON) {
+                    substituted_alts[i] = core_alt_create_con(strdup(orig_alt->con.constructor),
+                                                            NULL, 0, substituted_alt_expr);
+                } else {
+                    substituted_alts[i] = core_alt_create_default(substituted_alt_expr);
+                }
+            }
+            
+            return core_expr_create_case(substituted_expr, NULL, NULL, 
+                                       substituted_alts, expr->case_expr.alt_count);
+        }
+        
         default:
             fprintf(stderr, "Error: Substitution not implemented for expression type %s\n", 
                     core_expr_type_to_string(expr->expr_type));
@@ -789,6 +839,27 @@ CoreExpr *core_substitute_expr(CoreExpr *expr, char *var_name, CoreExpr *replace
             return core_let_simple(strdup(expr->let.binds[0]->var->name), binds_expr, body);
         }
         
+        case CORE_CASE: {
+            // Substitute in case expression and alternatives
+            CoreExpr *substituted_expr = core_substitute_expr(expr->case_expr.expr, var_name, replacement);
+            CoreAlt **substituted_alts = (CoreAlt **)malloc(expr->case_expr.alt_count * sizeof(CoreAlt *));
+            
+            for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                CoreAlt *orig_alt = expr->case_expr.alts[i];
+                CoreExpr *substituted_alt_expr = core_substitute_expr(orig_alt->expr, var_name, replacement);
+                
+                if (orig_alt->alt_kind == ALT_CON) {
+                    substituted_alts[i] = core_alt_create_con(strdup(orig_alt->con.constructor),
+                                                            NULL, 0, substituted_alt_expr);
+                } else {
+                    substituted_alts[i] = core_alt_create_default(substituted_alt_expr);
+                }
+            }
+            
+            return core_expr_create_case(substituted_expr, NULL, NULL, 
+                                       substituted_alts, expr->case_expr.alt_count);
+        }
+        
         default:
             fprintf(stderr, "Error: Expression substitution not implemented for expression type %s\n", 
                     core_expr_type_to_string(expr->expr_type));
@@ -828,6 +899,24 @@ CoreExpr *core_expr_copy(CoreExpr *expr) {
             return core_let_simple(strdup(expr->let.binds[0]->var->name),
                                   core_expr_copy(expr->let.binds[0]->expr),
                                   core_expr_copy(expr->let.body));
+            
+        case CORE_CASE: {
+            // Copy alternatives
+            CoreAlt **copied_alts = (CoreAlt **)malloc(expr->case_expr.alt_count * sizeof(CoreAlt *));
+            for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                CoreAlt *orig_alt = expr->case_expr.alts[i];
+                if (orig_alt->alt_kind == ALT_CON) {
+                    copied_alts[i] = core_alt_create_con(strdup(orig_alt->con.constructor), 
+                                                       NULL, 0, 
+                                                       core_expr_copy(orig_alt->expr));
+                } else {
+                    copied_alts[i] = core_alt_create_default(core_expr_copy(orig_alt->expr));
+                }
+            }
+            return core_expr_create_case(core_expr_copy(expr->case_expr.expr), 
+                                       NULL, NULL, 
+                                       copied_alts, expr->case_expr.alt_count);
+        }
             
         default:
             fprintf(stderr, "Error: Copy not implemented for expression type %s\n", 

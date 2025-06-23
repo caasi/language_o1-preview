@@ -198,11 +198,6 @@ Token lexer_get_next_token(Lexer *lexer)
             lexer_advance(lexer);
             return (Token){TOKEN_PLUS, 0, NULL};
         }
-        if (lexer->current_char == '-')
-        {
-            lexer_advance(lexer);
-            return (Token){TOKEN_MINUS, 0, NULL};
-        }
         if (lexer->current_char == '*')
         {
             lexer_advance(lexer);
