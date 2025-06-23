@@ -1,2 +1,1 @@
-let infinite_recursion = \n. infinite_recursion n
-infinite_recursion 1
+let infinite_recursion = \n. infinite_recursion n in infinite_recursion 1

@@ -3,6 +3,7 @@
 #include <string.h>
 #include "print.h"
 #include "parser.h"
+#include "core.h"
 
 Parser parser_create(Lexer lexer)
 {
@@ -1229,4 +1230,190 @@ ASTNode *parse_case_expression(Parser *parser)
     }
 
     return case_node;
+}
+
+// ============================================================================
+// Core Expression Parsing (Phase 2)
+// ============================================================================
+
+// Parse Core expressions: handles let, lambda, case, application
+CoreExpr *parse_core_expression(Parser *parser) {
+    // Check for let expression
+    if (parser->current_token.type == TOKEN_KEYWORD_LET) {
+        return parse_core_let(parser);
+    }
+    
+    // Check for lambda expression: \x. body
+    if (parser->current_token.type == TOKEN_BACKSLASH) {
+        return parse_core_lambda(parser);
+    }
+    
+    // Check for case expression
+    if (parser->current_token.type == TOKEN_KEYWORD_CASE) {
+        return parse_core_case(parser);
+    }
+    
+    // Otherwise, parse application
+    return parse_core_application(parser);
+}
+
+// Parse atomic Core expressions: variables, literals, parenthesized expressions
+CoreExpr *parse_core_atom(Parser *parser) {
+    if (parser->current_token.type == TOKEN_NUMBER) {
+        double val = parser->current_token.value;
+        parser_eat(parser, TOKEN_NUMBER);
+        return core_double(val);
+    }
+    
+    if (parser->current_token.type == TOKEN_STRING) {
+        char *str = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_STRING);
+        return core_string(str);
+    }
+    
+    if (parser->current_token.type == TOKEN_IDENTIFIER) {
+        char *name = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_IDENTIFIER);
+        return core_var(name);
+    }
+    
+    // Handle parenthesized expressions
+    if (parser->current_token.type == TOKEN_LPAREN) {
+        parser_eat(parser, TOKEN_LPAREN);
+        
+        // Check if this is an operator in parentheses like (+), (-), (*), (/)
+        if (parser->current_token.type == TOKEN_PLUS ||
+            parser->current_token.type == TOKEN_MINUS ||
+            parser->current_token.type == TOKEN_MUL ||
+            parser->current_token.type == TOKEN_DIV ||
+            parser->current_token.type == TOKEN_EQUAL_EQUAL ||
+            parser->current_token.type == TOKEN_NOT_EQUAL ||
+            parser->current_token.type == TOKEN_LESS ||
+            parser->current_token.type == TOKEN_LESS_EQUAL ||
+            parser->current_token.type == TOKEN_GREATER ||
+            parser->current_token.type == TOKEN_GREATER_EQUAL) {
+            
+            // Convert operator token to variable name
+            char *op_name = NULL;
+            switch (parser->current_token.type) {
+                case TOKEN_PLUS: op_name = strdup("+"); break;
+                case TOKEN_MINUS: op_name = strdup("-"); break;
+                case TOKEN_MUL: op_name = strdup("*"); break;
+                case TOKEN_DIV: op_name = strdup("/"); break;
+                case TOKEN_EQUAL_EQUAL: op_name = strdup("=="); break;
+                case TOKEN_NOT_EQUAL: op_name = strdup("!="); break;
+                case TOKEN_LESS: op_name = strdup("<"); break;
+                case TOKEN_LESS_EQUAL: op_name = strdup("<="); break;
+                case TOKEN_GREATER: op_name = strdup(">"); break;
+                case TOKEN_GREATER_EQUAL: op_name = strdup(">="); break;
+                default: break;
+            }
+            
+            parser_eat(parser, parser->current_token.type);
+            parser_eat(parser, TOKEN_RPAREN);
+            return core_var(op_name);
+        } else {
+            // Regular parenthesized expression
+            CoreExpr *expr = parse_core_expression(parser);
+            parser_eat(parser, TOKEN_RPAREN);
+            return expr;
+        }
+    }
+    
+    fprintf(stderr, "Error: Unexpected token in Core expression: %s\n", 
+            token_type_to_string(parser->current_token.type));
+    exit(EXIT_FAILURE);
+}
+
+// Parse Core application: f x y (left-associative)
+CoreExpr *parse_core_application(Parser *parser) {
+    CoreExpr *expr = parse_core_atom(parser);
+    
+    // Keep applying as long as we have atoms
+    while (parser->current_token.type == TOKEN_NUMBER ||
+           parser->current_token.type == TOKEN_STRING ||
+           parser->current_token.type == TOKEN_IDENTIFIER ||
+           parser->current_token.type == TOKEN_LPAREN) {
+        CoreExpr *arg = parse_core_atom(parser);
+        expr = core_expr_create_app(expr, arg);
+    }
+    
+    return expr;
+}
+
+// Parse Core lambda: \x. body
+CoreExpr *parse_core_lambda(Parser *parser) {
+    parser_eat(parser, TOKEN_BACKSLASH);
+    
+    if (parser->current_token.type != TOKEN_IDENTIFIER) {
+        fprintf(stderr, "Error: Expected parameter name in lambda\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    char *param_name = strdup(parser->current_token.text);
+    parser_eat(parser, TOKEN_IDENTIFIER);
+    parser_eat(parser, TOKEN_DOT);
+    
+    CoreExpr *body = parse_core_expression(parser);
+    return core_lambda(param_name, body);
+}
+
+// Parse Core let: let x = value in body
+CoreExpr *parse_core_let(Parser *parser) {
+    parser_eat(parser, TOKEN_KEYWORD_LET);
+    
+    if (parser->current_token.type != TOKEN_IDENTIFIER) {
+        fprintf(stderr, "Error: Expected variable name in let\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    char *var_name = strdup(parser->current_token.text);
+    parser_eat(parser, TOKEN_IDENTIFIER);
+    parser_eat(parser, TOKEN_EQUAL);
+    
+    CoreExpr *value = parse_core_expression(parser);
+    
+    parser_eat(parser, TOKEN_KEYWORD_IN);
+    CoreExpr *body = parse_core_expression(parser);
+    
+    return core_let_simple(var_name, value, body);
+}
+
+// Parse Core case: case expr of pattern -> result; pattern -> result
+CoreExpr *parse_core_case(Parser *parser) {
+    parser_eat(parser, TOKEN_KEYWORD_CASE);
+    
+    CoreExpr *expr = parse_core_expression(parser);
+    parser_eat(parser, TOKEN_KEYWORD_OF);
+    
+    // For now, implement a simple case parser
+    // In a full implementation, we'd handle multiple patterns
+    CoreAlt **alts = (CoreAlt **)malloc(2 * sizeof(CoreAlt *));
+    int alt_count = 0;
+    
+    // Parse first alternative
+    if (parser->current_token.type == TOKEN_IDENTIFIER) {
+        char *constructor = strdup(parser->current_token.text);
+        parser_eat(parser, TOKEN_IDENTIFIER);
+        parser_eat(parser, TOKEN_ARROW);
+        CoreExpr *result = parse_core_expression(parser);
+        
+        alts[alt_count++] = core_alt_create_con(constructor, NULL, 0, result);
+        
+        // Check for semicolon and second alternative
+        if (parser->current_token.type == TOKEN_SEMICOLON) {
+            parser_eat(parser, TOKEN_SEMICOLON);
+            
+            if (parser->current_token.type == TOKEN_IDENTIFIER) {
+                char *constructor2 = strdup(parser->current_token.text);
+                parser_eat(parser, TOKEN_IDENTIFIER);
+                parser_eat(parser, TOKEN_ARROW);
+                CoreExpr *result2 = parse_core_expression(parser);
+                
+                alts[alt_count++] = core_alt_create_con(constructor2, NULL, 0, result2);
+            }
+        }
+    }
+    
+    return core_expr_create_case(expr, NULL, NULL, alts, alt_count);
 }

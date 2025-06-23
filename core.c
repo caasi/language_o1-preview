@@ -538,3 +538,270 @@ CoreExpr *core_expr_simplify(CoreExpr *expr) {
     // TODO: Implement optimizations like beta reduction, constant folding, etc.
     return expr;
 }
+
+// ============================================================================
+// Simple Core Evaluator (for basic expressions)
+// ============================================================================
+
+double core_eval_simple(CoreExpr *expr) {
+    if (!expr) return 0.0;
+    
+    switch (expr->expr_type) {
+        case CORE_LIT:
+            if (expr->lit->lit_kind == LIT_DOUBLE) {
+                return expr->lit->double_val;
+            } else if (expr->lit->lit_kind == LIT_INT) {
+                return (double)expr->lit->int_val;
+            }
+            break;
+            
+        case CORE_APP: {
+            // Handle binary operations for now
+            if (expr->app.fun->expr_type == CORE_APP) {
+                // This is a binary operation: op a b
+                CoreExpr *op_app = expr->app.fun;
+                if (op_app->app.fun->expr_type == CORE_VAR) {
+                    char *op_name = op_app->app.fun->var->name;
+                    double left = core_eval_simple(op_app->app.arg);
+                    double right = core_eval_simple(expr->app.arg);
+                    
+                    if (strcmp(op_name, "+") == 0) {
+                        return left + right;
+                    } else if (strcmp(op_name, "-") == 0) {
+                        return left - right;
+                    } else if (strcmp(op_name, "*") == 0) {
+                        return left * right;
+                    } else if (strcmp(op_name, "/") == 0) {
+                        if (right == 0.0) {
+                            fprintf(stderr, "Error: Division by zero\n");
+                            exit(EXIT_FAILURE);
+                        }
+                        return left / right;
+                    }
+                }
+            }
+            
+            // Handle lambda application: (\x. body) arg
+            if (expr->app.fun->expr_type == CORE_LAM) {
+                CoreExpr *lambda = expr->app.fun;
+                CoreExpr *arg = expr->app.arg;
+                
+                // Evaluate the argument
+                double arg_val = core_eval_simple(arg);
+                
+                // Substitute the parameter with the argument value in the lambda body
+                CoreExpr *substituted_body = core_substitute_simple(lambda->lam.body, 
+                                                                   lambda->lam.var->name, 
+                                                                   arg_val);
+                double result = core_eval_simple(substituted_body);
+                core_expr_free(substituted_body);
+                return result;
+            }
+            
+            // If neither of the above, it might be a variable application
+            // For now, we can't handle this case fully
+            fprintf(stderr, "Error: Cannot evaluate application - function type %s\n", 
+                    core_expr_type_to_string(expr->app.fun->expr_type));
+            exit(EXIT_FAILURE);
+        }
+        
+        case CORE_LET: {
+            // Let evaluation with lambda substitution
+            // Instead of evaluating the bound value, substitute it directly
+            CoreExpr *substituted_body = core_substitute_expr(expr->let.body, 
+                                                            expr->let.binds[0]->var->name, 
+                                                            expr->let.binds[0]->expr);
+            double result = core_eval_simple(substituted_body);
+            core_expr_free(substituted_body);
+            return result;
+        }
+        
+        case CORE_VAR: {
+            // Variables should have been substituted by now
+            // If we reach here, it might be an unbound variable or operator
+            fprintf(stderr, "Error: Unbound variable '%s'\n", expr->var->name);
+            exit(EXIT_FAILURE);
+        }
+        
+        case CORE_LAM: {
+            // Lambdas can't be evaluated to a number directly
+            // This suggests we need a different evaluation strategy
+            fprintf(stderr, "Error: Cannot evaluate lambda to number directly\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        default:
+            fprintf(stderr, "Error: Core evaluation not implemented for expression type %s\n", 
+                    core_expr_type_to_string(expr->expr_type));
+            exit(EXIT_FAILURE);
+    }
+    
+    return 0.0;
+}
+
+// Simple substitution: replace variable with literal value
+CoreExpr *core_substitute_simple(CoreExpr *expr, char *var_name, double value) {
+    if (!expr) return NULL;
+    
+    switch (expr->expr_type) {
+        case CORE_VAR: {
+            if (strcmp(expr->var->name, var_name) == 0) {
+                // Replace the variable with the literal value
+                return core_double(value);
+            } else {
+                // Return a copy of the variable
+                return core_var(strdup(expr->var->name));
+            }
+        }
+        
+        case CORE_LIT: {
+            // Copy the literal
+            if (expr->lit->lit_kind == LIT_DOUBLE) {
+                return core_double(expr->lit->double_val);
+            } else if (expr->lit->lit_kind == LIT_INT) {
+                return core_int(expr->lit->int_val);
+            } else if (expr->lit->lit_kind == LIT_STRING) {
+                return core_string(strdup(expr->lit->string_val));
+            }
+            break;
+        }
+        
+        case CORE_APP: {
+            // Recursively substitute in both function and argument
+            CoreExpr *fun = core_substitute_simple(expr->app.fun, var_name, value);
+            CoreExpr *arg = core_substitute_simple(expr->app.arg, var_name, value);
+            return core_expr_create_app(fun, arg);
+        }
+        
+        case CORE_LAM: {
+            // Don't substitute if lambda parameter shadows the variable
+            if (strcmp(expr->lam.var->name, var_name) == 0) {
+                // Variable is shadowed, return copy of lambda
+                CoreExpr *body_copy = core_substitute_simple(expr->lam.body, "___never_match___", 0.0);
+                return core_lambda(strdup(expr->lam.var->name), body_copy);
+            } else {
+                // Substitute in body
+                CoreExpr *body = core_substitute_simple(expr->lam.body, var_name, value);
+                return core_lambda(strdup(expr->lam.var->name), body);
+            }
+        }
+        
+        case CORE_LET: {
+            // For now, don't substitute inside nested lets (complex)
+            // This is a simplified version
+            CoreExpr *binds_expr = core_substitute_simple(expr->let.binds[0]->expr, var_name, value);
+            CoreExpr *body = core_substitute_simple(expr->let.body, var_name, value);
+            return core_let_simple(strdup(expr->let.binds[0]->var->name), binds_expr, body);
+        }
+        
+        default:
+            fprintf(stderr, "Error: Substitution not implemented for expression type %s\n", 
+                    core_expr_type_to_string(expr->expr_type));
+            exit(EXIT_FAILURE);
+    }
+    
+    return NULL;
+}
+
+// Expression substitution: replace variable with another expression
+CoreExpr *core_substitute_expr(CoreExpr *expr, char *var_name, CoreExpr *replacement) {
+    if (!expr) return NULL;
+    
+    switch (expr->expr_type) {
+        case CORE_VAR: {
+            if (strcmp(expr->var->name, var_name) == 0) {
+                // Replace the variable with a copy of the replacement expression
+                return core_expr_copy(replacement);
+            } else {
+                // Return a copy of the variable
+                return core_var(strdup(expr->var->name));
+            }
+        }
+        
+        case CORE_LIT: {
+            // Copy the literal
+            if (expr->lit->lit_kind == LIT_DOUBLE) {
+                return core_double(expr->lit->double_val);
+            } else if (expr->lit->lit_kind == LIT_INT) {
+                return core_int(expr->lit->int_val);
+            } else if (expr->lit->lit_kind == LIT_STRING) {
+                return core_string(strdup(expr->lit->string_val));
+            }
+            break;
+        }
+        
+        case CORE_APP: {
+            // Recursively substitute in both function and argument
+            CoreExpr *fun = core_substitute_expr(expr->app.fun, var_name, replacement);
+            CoreExpr *arg = core_substitute_expr(expr->app.arg, var_name, replacement);
+            return core_expr_create_app(fun, arg);
+        }
+        
+        case CORE_LAM: {
+            // Don't substitute if lambda parameter shadows the variable
+            if (strcmp(expr->lam.var->name, var_name) == 0) {
+                // Variable is shadowed, return copy of lambda without substituting
+                CoreExpr *body_copy = core_expr_copy(expr->lam.body);
+                return core_lambda(strdup(expr->lam.var->name), body_copy);
+            } else {
+                // Substitute in body
+                CoreExpr *body = core_substitute_expr(expr->lam.body, var_name, replacement);
+                return core_lambda(strdup(expr->lam.var->name), body);
+            }
+        }
+        
+        case CORE_LET: {
+            // For now, don't substitute inside nested lets (complex)
+            CoreExpr *binds_expr = core_substitute_expr(expr->let.binds[0]->expr, var_name, replacement);
+            CoreExpr *body = core_substitute_expr(expr->let.body, var_name, replacement);
+            return core_let_simple(strdup(expr->let.binds[0]->var->name), binds_expr, body);
+        }
+        
+        default:
+            fprintf(stderr, "Error: Expression substitution not implemented for expression type %s\n", 
+                    core_expr_type_to_string(expr->expr_type));
+            exit(EXIT_FAILURE);
+    }
+    
+    return NULL;
+}
+
+// Deep copy of Core expression
+CoreExpr *core_expr_copy(CoreExpr *expr) {
+    if (!expr) return NULL;
+    
+    switch (expr->expr_type) {
+        case CORE_VAR:
+            return core_var(strdup(expr->var->name));
+            
+        case CORE_LIT:
+            if (expr->lit->lit_kind == LIT_DOUBLE) {
+                return core_double(expr->lit->double_val);
+            } else if (expr->lit->lit_kind == LIT_INT) {
+                return core_int(expr->lit->int_val);
+            } else if (expr->lit->lit_kind == LIT_STRING) {
+                return core_string(strdup(expr->lit->string_val));
+            }
+            break;
+            
+        case CORE_APP:
+            return core_expr_create_app(core_expr_copy(expr->app.fun), 
+                                       core_expr_copy(expr->app.arg));
+            
+        case CORE_LAM:
+            return core_lambda(strdup(expr->lam.var->name), 
+                              core_expr_copy(expr->lam.body));
+            
+        case CORE_LET:
+            return core_let_simple(strdup(expr->let.binds[0]->var->name),
+                                  core_expr_copy(expr->let.binds[0]->expr),
+                                  core_expr_copy(expr->let.body));
+            
+        default:
+            fprintf(stderr, "Error: Copy not implemented for expression type %s\n", 
+                    core_expr_type_to_string(expr->expr_type));
+            exit(EXIT_FAILURE);
+    }
+    
+    return NULL;
+}

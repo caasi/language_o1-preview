@@ -58,4 +58,16 @@ CoreExpr *ast_to_core(ASTNode *ast);
 // Simplify Core expressions (basic optimizations)
 CoreExpr *core_expr_simplify(CoreExpr *expr);
 
+// Core evaluation
+double core_eval_simple(CoreExpr *expr);
+
+// Simple substitution (for basic let evaluation)
+CoreExpr *core_substitute_simple(CoreExpr *expr, char *var_name, double value);
+
+// Expression substitution (substitute variable with expression)
+CoreExpr *core_substitute_expr(CoreExpr *expr, char *var_name, CoreExpr *replacement);
+
+// Deep copy of Core expression
+CoreExpr *core_expr_copy(CoreExpr *expr);
+
 #endif // CORE_H

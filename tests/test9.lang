@@ -1,2 +1,1 @@
-let multiply = \x. \y. (*) x y
-multiply 5
+let multiply = \x. \y. (*) x y in multiply 5
