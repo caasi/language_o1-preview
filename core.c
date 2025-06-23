@@ -556,13 +556,43 @@ double core_eval_simple(CoreExpr *expr) {
             break;
             
         case CORE_APP: {
-            // Handle binary operations for now
+            // Special case: Handle curried function application f a b
+            // This parses as ((f a) b), where (f a) should be a partial application
             if (expr->app.fun->expr_type == CORE_APP) {
-                // This is a binary operation: op a b
-                CoreExpr *op_app = expr->app.fun;
-                if (op_app->app.fun->expr_type == CORE_VAR) {
-                    char *op_name = op_app->app.fun->var->name;
-                    double left = core_eval_simple(op_app->app.arg);
+                CoreExpr *inner_app = expr->app.fun;
+                
+                // Check if this is a curried lambda application: ((λx.λy.body a) b)
+                if (inner_app->app.fun->expr_type == CORE_LAM) {
+                    CoreExpr *outer_lambda = inner_app->app.fun;
+                    if (outer_lambda->lam.body->expr_type == CORE_LAM) {
+                        // This is a curried function: λx.λy.body applied to two arguments
+                        CoreExpr *inner_lambda = outer_lambda->lam.body;
+                        CoreExpr *arg1 = inner_app->app.arg;
+                        CoreExpr *arg2 = expr->app.arg;
+                        
+                        // Evaluate both arguments
+                        double arg1_val = core_eval_simple(arg1);
+                        double arg2_val = core_eval_simple(arg2);
+                        
+                        // Apply both substitutions to the inner body
+                        CoreExpr *body_with_arg1 = core_substitute_simple(inner_lambda->lam.body,
+                                                                         outer_lambda->lam.var->name,
+                                                                         arg1_val);
+                        CoreExpr *final_body = core_substitute_simple(body_with_arg1,
+                                                                     inner_lambda->lam.var->name,
+                                                                     arg2_val);
+                        
+                        double result = core_eval_simple(final_body);
+                        core_expr_free(body_with_arg1);
+                        core_expr_free(final_body);
+                        return result;
+                    }
+                }
+                
+                // Handle binary operations: op a b
+                if (inner_app->app.fun->expr_type == CORE_VAR) {
+                    char *op_name = inner_app->app.fun->var->name;
+                    double left = core_eval_simple(inner_app->app.arg);
                     double right = core_eval_simple(expr->app.arg);
                     
                     if (strcmp(op_name, "+") == 0) {
@@ -579,14 +609,17 @@ double core_eval_simple(CoreExpr *expr) {
                         return left / right;
                     }
                 }
+                
+                // Other nested applications
+                fprintf(stderr, "Error: Cannot evaluate complex application\n");
+                exit(EXIT_FAILURE);
             }
             
-            // Handle lambda application: (\x. body) arg
+            // Handle single lambda application: (\x. body) arg
             if (expr->app.fun->expr_type == CORE_LAM) {
                 CoreExpr *lambda = expr->app.fun;
                 CoreExpr *arg = expr->app.arg;
                 
-                // Evaluate the argument
                 double arg_val = core_eval_simple(arg);
                 
                 // Substitute the parameter with the argument value in the lambda body
@@ -599,7 +632,6 @@ double core_eval_simple(CoreExpr *expr) {
             }
             
             // If neither of the above, it might be a variable application
-            // For now, we can't handle this case fully
             fprintf(stderr, "Error: Cannot evaluate application - function type %s\n", 
                     core_expr_type_to_string(expr->app.fun->expr_type));
             exit(EXIT_FAILURE);
