@@ -61,11 +61,17 @@ CoreExpr *core_expr_simplify(CoreExpr *expr);
 // Core evaluation
 double core_eval_simple(CoreExpr *expr);
 
+// Recursive evaluation with function binding
+double core_eval_with_rec(CoreExpr *expr, char *rec_name, CoreExpr *rec_def);
+
 // Simple substitution (for basic let evaluation)
 CoreExpr *core_substitute_simple(CoreExpr *expr, char *var_name, double value);
 
 // Expression substitution (substitute variable with expression)
 CoreExpr *core_substitute_expr(CoreExpr *expr, char *var_name, CoreExpr *replacement);
+
+// Check if expression contains a variable
+int core_expr_contains_var(CoreExpr *expr, char *var_name);
 
 // Deep copy of Core expression
 CoreExpr *core_expr_copy(CoreExpr *expr);

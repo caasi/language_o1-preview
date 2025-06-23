@@ -1377,8 +1377,11 @@ CoreExpr *parse_core_let(Parser *parser) {
     CoreExpr *body = parse_core_expression(parser);
     
     // Check if this should be a recursive let by looking for the variable name in the value expression
-    // For now, we'll make all let bindings recursive to handle cases like factorial
-    return core_letrec_simple(var_name, value, body);
+    if (core_expr_contains_var(value, var_name)) {
+        return core_letrec_simple(var_name, value, body);
+    } else {
+        return core_let_simple(var_name, value, body);
+    }
 }
 
 // Parse Core case: case expr of pattern -> result; pattern -> result
