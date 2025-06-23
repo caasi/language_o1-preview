@@ -37,6 +37,8 @@ typedef enum
     TOKEN_GREATER_EQUAL, // '>='
     TOKEN_ARROW,         // '->'
     TOKEN_FAT_ARROW,     // '=>'
+    TOKEN_BACKSLASH,     // '\' (lambda)
+    TOKEN_DOT,           // '.'
     TOKEN_COMMA,         // ','
     TOKEN_SEMICOLON,     // ';'
     TOKEN_EQUAL,         // '='

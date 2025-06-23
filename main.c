@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "evaluator.h"
 #include "symbol_table.h"
+#include "core.h"
 
 int main()
 {
@@ -23,7 +24,9 @@ int main()
     // Initialize lexer and parser
     Lexer lexer = lexer_create(program_text);
     Parser parser = parser_create(lexer);
-    ASTNode *ast = parse_statement_list(&parser);
+    
+    // Parse as Core expression instead of ML statements
+    CoreExpr *core_expr = parse_core_expression(&parser);
 
     // Ensure the entire input was consumed
     if (parser.current_token.type != TOKEN_EOF)
@@ -32,31 +35,15 @@ int main()
         return EXIT_FAILURE;
     }
 
-    // Initialize the symbol table
-    SymbolTable *sym_table = symbol_table_create();
+    // Evaluate the Core expression (simple evaluator for now)
+    double result = core_eval_simple(core_expr);
 
-    // Initialize the global environment
-    Env *global_env = env_create(NULL);
-
-    // Evaluate the AST
-    Value *result = evaluate(ast, global_env, sym_table, 0);
-
-    // Output the result
-    if (result != NULL)
-    {
-        print_value(result, 0, 1);
-        free_value(result);
-    }
-    else
-    {
-        printf("No result.\n");
-    }
+    // Output the result (same format as original)
+    printf("%f\n", result);
 
     // Clean up
     free(program_text);
-    free_ast(ast);
-    symbol_table_free(sym_table);
-    env_destroy(global_env);
+    core_expr_free(core_expr);
 
     return EXIT_SUCCESS;
 }

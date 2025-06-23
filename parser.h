@@ -316,4 +316,12 @@ void free_ast(ASTNode *node);
 const char *ast_node_type_to_string(ASTNodeType type);
 void print_ast(ASTNode *node, int indent);
 
+// Core parsing functions (Phase 2)
+CoreExpr *parse_core_expression(Parser *parser);
+CoreExpr *parse_core_atom(Parser *parser);
+CoreExpr *parse_core_application(Parser *parser);
+CoreExpr *parse_core_lambda(Parser *parser);
+CoreExpr *parse_core_let(Parser *parser);
+CoreExpr *parse_core_case(Parser *parser);
+
 #endif // PARSER_H
