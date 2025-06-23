@@ -72,6 +72,10 @@ const char *token_type_to_string(TokenType type)
         return "Arrow";
     case TOKEN_FAT_ARROW:
         return "Fat Arrow";
+    case TOKEN_BACKSLASH:
+        return "Backslash";
+    case TOKEN_DOT:
+        return "Dot";
     case TOKEN_COMMA:
         return "Comma";
     case TOKEN_SEMICOLON:
@@ -180,7 +184,8 @@ Token lexer_get_next_token(Lexer *lexer)
             lexer_skip_whitespace(lexer);
             continue;
         }
-        if (isdigit(lexer->current_char) || lexer->current_char == '.')
+        if (isdigit(lexer->current_char) || 
+            (lexer->current_char == '.' && isdigit(lexer_peek(lexer))))
         {
             return lexer_get_number(lexer);
         }
@@ -230,6 +235,20 @@ Token lexer_get_next_token(Lexer *lexer)
         {
             lexer_advance(lexer);
             return (Token){TOKEN_PIPE, 0, NULL};
+        }
+
+        // Handle '\' (backslash for lambda)
+        if (lexer->current_char == '\\')
+        {
+            lexer_advance(lexer);
+            return (Token){TOKEN_BACKSLASH, 0, NULL};
+        }
+
+        // Handle '.' (dot)
+        if (lexer->current_char == '.')
+        {
+            lexer_advance(lexer);
+            return (Token){TOKEN_DOT, 0, NULL};
         }
 
         // Handle '{' and '}'
