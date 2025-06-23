@@ -612,8 +612,38 @@ double core_eval_simple(CoreExpr *expr) {
                     }
                 }
                 
-                // Other nested applications
-                fprintf(stderr, "Error: Cannot evaluate complex application\n");
+                // Handle function variable in nested application
+                // This is for cases like "factorial ((-) n 1)" where inner_app = "factorial ((-) n 1)"
+                // But actually the structure is ((factorial ((-) n 1))) arg
+                // Let's try evaluating the inner app result as a function
+                if (inner_app->app.fun->expr_type == CORE_VAR) {
+                    // This might be a function call that results in a lambda
+                    // For now, let's not handle this complex case here
+                }
+                
+                // Handle any nested application with a lambda
+                if (inner_app->app.fun->expr_type == CORE_LAM) {
+                    // Try to evaluate this as a regular lambda application
+                    double inner_result = core_eval_simple(inner_app);
+                    // Now apply this result as a function to the outer argument
+                    // Since we can only return numbers, this suggests the outer arg should be applied
+                    // to some result that's also a function
+                    
+                    // For now, treat the inner result as a number and see if we can apply
+                    CoreExpr *inner_lit = core_expr_create_lit(core_lit_create_double(inner_result));
+                    CoreExpr *new_app = core_expr_create_app(inner_lit, expr->app.arg);
+                    double result = core_eval_simple(new_app);
+                    core_expr_free(inner_lit);
+                    core_expr_free(new_app);
+                    return result;
+                }
+                
+                // Debug: print the structure we can't handle
+                fprintf(stderr, "Error: Cannot evaluate complex application. Inner app fun type: %s\n", 
+                        core_expr_type_to_string(inner_app->app.fun->expr_type));
+                if (inner_app->app.fun->expr_type == CORE_VAR) {
+                    fprintf(stderr, "Inner app fun var name: %s\n", inner_app->app.fun->var->name);
+                }
                 exit(EXIT_FAILURE);
             }
             
@@ -633,6 +663,35 @@ double core_eval_simple(CoreExpr *expr) {
                 return result;
             }
             
+            // Handle let expression application: (let x = v in body) arg
+            if (expr->app.fun->expr_type == CORE_LET) {
+                CoreExpr *let_expr = expr->app.fun;
+                CoreExpr *arg = expr->app.arg;
+                
+                // Transform: (let x = v in body) arg => let x = v in (body arg)
+                CoreExpr *new_body = core_expr_create_app(let_expr->let.body, arg);
+                CoreExpr *new_let = core_expr_create_let(let_expr->let.binds, 
+                                                       let_expr->let.bind_count, 
+                                                       new_body, 
+                                                       let_expr->let.is_recursive);
+                double result = core_eval_simple(new_let);
+                core_expr_free(new_body);
+                core_expr_free(new_let);
+                return result;
+            }
+            
+            // Handle direct variable function application: f arg where f is a variable
+            if (expr->app.fun->expr_type == CORE_VAR) {
+                // This is likely a recursive function call
+                // We need to look up the function definition and apply it
+                
+                // For now, we can't handle recursive calls during evaluation
+                // The problem is that the variable should have been substituted already
+                fprintf(stderr, "Error: Cannot evaluate variable function application '%s'\n", 
+                        expr->app.fun->var->name);
+                exit(EXIT_FAILURE);
+            }
+            
             // If neither of the above, it might be a variable application
             fprintf(stderr, "Error: Cannot evaluate application - function type %s\n", 
                     core_expr_type_to_string(expr->app.fun->expr_type));
@@ -641,13 +700,30 @@ double core_eval_simple(CoreExpr *expr) {
         
         case CORE_LET: {
             // Let evaluation with lambda substitution
-            // Instead of evaluating the bound value, substitute it directly
-            CoreExpr *substituted_body = core_substitute_expr(expr->let.body, 
-                                                            expr->let.binds[0]->var->name, 
-                                                            expr->let.binds[0]->expr);
-            double result = core_eval_simple(substituted_body);
-            core_expr_free(substituted_body);
-            return result;
+            CoreExpr *bound_value = expr->let.binds[0]->expr;
+            char *var_name = expr->let.binds[0]->var->name;
+            
+            // For recursive functions, substitute the function definition with the let-bound lambda
+            // But also substitute recursive calls in the lambda body with the entire let expression
+            if (expr->let.is_recursive && bound_value->expr_type == CORE_LAM) {
+                // First, substitute recursive calls in the lambda body
+                CoreExpr *fixed_lambda_body = core_substitute_expr(bound_value->lam.body, var_name, expr);
+                CoreExpr *fixed_lambda = core_lambda(strdup(bound_value->lam.var->name), fixed_lambda_body);
+                
+                // Now substitute the fixed lambda into the let body
+                CoreExpr *substituted_body = core_substitute_expr(expr->let.body, var_name, fixed_lambda);
+                double result = core_eval_simple(substituted_body);
+                
+                core_expr_free(fixed_lambda);
+                core_expr_free(substituted_body);
+                return result;
+            } else {
+                // Non-recursive let: substitute the value directly
+                CoreExpr *substituted_body = core_substitute_expr(expr->let.body, var_name, bound_value);
+                double result = core_eval_simple(substituted_body);
+                core_expr_free(substituted_body);
+                return result;
+            }
         }
         
         case CORE_VAR: {
