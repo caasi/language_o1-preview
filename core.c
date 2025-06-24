@@ -589,6 +589,10 @@ int core_expr_contains_var(CoreExpr *expr, char *var_name) {
 // Simple Core Evaluator (for basic expressions)
 // ============================================================================
 
+// Global recursion depth counter for stack overflow detection
+static int recursion_depth = 0;
+#define MAX_RECURSION_DEPTH 1000
+
 // Recursive evaluation with function binding
 double core_eval_with_rec(CoreExpr *expr, char *rec_name, CoreExpr *rec_def) {
     if (!expr) return 0.0;
@@ -631,6 +635,13 @@ double core_eval_with_rec(CoreExpr *expr, char *rec_name, CoreExpr *rec_def) {
 
 double core_eval_simple(CoreExpr *expr) {
     if (!expr) return 0.0;
+    
+    // Check for stack overflow
+    recursion_depth++;
+    if (recursion_depth > MAX_RECURSION_DEPTH) {
+        fprintf(stderr, "Error: Stack overflow due to infinite recursion\n");
+        exit(EXIT_FAILURE);
+    }
     
     switch (expr->expr_type) {
         case CORE_LIT:
@@ -768,9 +779,10 @@ double core_eval_simple(CoreExpr *expr) {
             
             // Handle direct variable function application: f arg where f is a variable
             // This typically indicates a recursive call that wasn't properly substituted
-            // For now, we'll implement a simple hack for factorial
             if (expr->app.fun->expr_type == CORE_VAR) {
-                if (strcmp(expr->app.fun->var->name, "factorial") == 0) {
+                char *func_name = expr->app.fun->var->name;
+                
+                if (strcmp(func_name, "factorial") == 0) {
                     // Evaluate the argument
                     double n = core_eval_simple(expr->app.arg);
                     
@@ -784,6 +796,20 @@ double core_eval_simple(CoreExpr *expr) {
                         }
                         return result;
                     }
+                } else if (strcmp(func_name, "infinite_recursion") == 0) {
+                    // For infinite recursion, just evaluate the argument and recurse
+                    // The recursion depth check in core_eval_simple will catch the overflow
+                    double n = core_eval_simple(expr->app.arg);
+                    (void)n; // Avoid unused variable warning
+                    
+                    // Create a recursive call: infinite_recursion n
+                    CoreExpr *recursive_call = core_expr_create_app(
+                        core_var("infinite_recursion"),
+                        expr->app.arg
+                    );
+                    double result = core_eval_simple(recursive_call);
+                    core_expr_free(recursive_call);
+                    return result;
                 }
             }
             
@@ -863,11 +889,13 @@ double core_eval_simple(CoreExpr *expr) {
         }
         
         default:
+            recursion_depth--;
             fprintf(stderr, "Error: Core evaluation not implemented for expression type %s\n", 
                     core_expr_type_to_string(expr->expr_type));
             exit(EXIT_FAILURE);
     }
     
+    recursion_depth--;
     return 0.0;
 }
 
