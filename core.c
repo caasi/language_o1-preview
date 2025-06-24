@@ -663,14 +663,18 @@ double core_eval_simple(CoreExpr *expr) {
         exit(EXIT_FAILURE);
     }
     
+    
     switch (expr->expr_type) {
-        case CORE_LIT:
+        case CORE_LIT: {
+            double result = 0.0;
             if (expr->lit->lit_kind == LIT_DOUBLE) {
-                return expr->lit->double_val;
+                result = expr->lit->double_val;
             } else if (expr->lit->lit_kind == LIT_INT) {
-                return (double)expr->lit->int_val;
+                result = (double)expr->lit->int_val;
             }
-            break;
+            recursion_depth--;
+            return result;
+        }
             
         case CORE_APP: {
             // Special case: Handle curried function application f a b
@@ -878,6 +882,7 @@ double core_eval_simple(CoreExpr *expr) {
             // Let evaluation with proper recursive handling
             CoreExpr *bound_value = expr->let.binds[0]->expr;
             char *var_name = expr->let.binds[0]->var->name;
+            
             
             if (expr->let.is_recursive && bound_value->expr_type == CORE_LAM) {
                 
