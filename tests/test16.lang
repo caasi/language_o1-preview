@@ -1,3 +1,1 @@
-type Point = Point Number Number
-
 let p = Point 3 4 in p

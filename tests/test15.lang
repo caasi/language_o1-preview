@@ -1,4 +1,1 @@
-type Result = Success Number | Failure String
-type MaybeResult = Just Result | Nothing
-
 let res = Just (Success 100) in res

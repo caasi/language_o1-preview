@@ -1,4 +1,4 @@
-let app = \f. \x. f x
-let inc = \x. (+) x 1
+let app = \ f . \ x . f x in
+let inc = \ x . (+) x 1 in
 app inc 2
 
