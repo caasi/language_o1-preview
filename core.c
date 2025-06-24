@@ -1002,10 +1002,23 @@ CoreExpr *core_substitute_expr(CoreExpr *expr, char *var_name, CoreExpr *replace
         }
         
         case CORE_LET: {
-            // For now, don't substitute inside nested lets (complex)
+            // Handle variable shadowing properly
+            char *let_var_name = expr->let.binds[0]->var->name;
+            
+            // Always substitute in the binding expression
             CoreExpr *binds_expr = core_substitute_expr(expr->let.binds[0]->expr, var_name, replacement);
-            CoreExpr *body = core_substitute_expr(expr->let.body, var_name, replacement);
-            return core_let_simple(strdup(expr->let.binds[0]->var->name), binds_expr, body);
+            
+            // Only substitute in body if let variable doesn't shadow our variable
+            CoreExpr *body;
+            if (strcmp(let_var_name, var_name) == 0) {
+                // Variable is shadowed, don't substitute in body
+                body = core_expr_copy(expr->let.body);
+            } else {
+                // No shadowing, substitute in body
+                body = core_substitute_expr(expr->let.body, var_name, replacement);
+            }
+            
+            return core_let_simple(strdup(let_var_name), binds_expr, body);
         }
         
         case CORE_CASE: {
