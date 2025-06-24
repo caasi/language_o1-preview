@@ -682,11 +682,27 @@ double core_eval_simple(CoreExpr *expr) {
                 if (inner_app->app.fun->expr_type == CORE_LAM) {
                     CoreExpr *outer_lambda = inner_app->app.fun;
                     if (outer_lambda->lam.body->expr_type == CORE_LAM) {
-                        // This is a curried function: λx.λy.body applied to two arguments
                         CoreExpr *inner_lambda = outer_lambda->lam.body;
                         CoreExpr *arg1 = inner_app->app.arg;
                         CoreExpr *arg2 = expr->app.arg;
                         
+                        // Special case for app pattern: ((λf.λx.f x) func) arg
+                        // Check if this matches the pattern λf.λx.f x
+                        if (inner_lambda->lam.body->expr_type == CORE_APP &&
+                            inner_lambda->lam.body->app.fun->expr_type == CORE_VAR &&
+                            strcmp(inner_lambda->lam.body->app.fun->var->name, outer_lambda->lam.var->name) == 0 &&
+                            inner_lambda->lam.body->app.arg->expr_type == CORE_VAR &&
+                            strcmp(inner_lambda->lam.body->app.arg->var->name, inner_lambda->lam.var->name) == 0) {
+                            
+                            // This is the app function: λf.λx.f x
+                            // So ((λf.λx.f x) func) arg = func arg
+                            CoreExpr *new_app = core_expr_create_app(arg1, arg2);
+                            double result = core_eval_simple(new_app);
+                            core_expr_free(new_app);
+                            return result;
+                        }
+                        
+                        // Regular curried function: λx.λy.body applied to two arguments
                         // Evaluate both arguments
                         double arg1_val = core_eval_simple(arg1);
                         double arg2_val = core_eval_simple(arg2);
