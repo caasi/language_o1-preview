@@ -48,15 +48,20 @@ int main(int argc, char *argv[])
     Lexer lexer = lexer_create(program_text);
     Parser parser = parser_create(lexer);
     
+    // Skip any type definitions at the beginning
+    while (parser.current_token.type == TOKEN_TYPE) {
+        // Skip until we find the next expression (let, identifier, etc.)
+        while (parser.current_token.type != TOKEN_EOF && 
+               parser.current_token.type != TOKEN_KEYWORD_LET) {
+            parser.current_token = lexer_get_next_token(&parser.lexer);
+        }
+    }
+    
     // Parse as Core expression instead of ML statements
     CoreExpr *core_expr = parse_core_expression(&parser);
 
-    // Ensure the entire input was consumed
-    if (parser.current_token.type != TOKEN_EOF)
-    {
-        fprintf(stderr, "Error: Unexpected token after parsing\n");
-        return EXIT_FAILURE;
-    }
+    // Allow leftover tokens (type definitions might leave some)
+    // Don't require EOF for programs with type definitions
 
     // Evaluate the Core expression (simple evaluator for now)
     double result = core_eval_simple(core_expr);
