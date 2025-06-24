@@ -1,3 +1,5 @@
+let Just = \ x . Just# x in
+let Nothing = Nothing# in
 let describe = \ m . case m of
   Just n -> n
 | Nothing -> 0

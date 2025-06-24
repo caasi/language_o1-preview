@@ -1,1 +1,2 @@
+let Point = \ x . \ y . Point# x y in
 let p = Point 3 4 in p

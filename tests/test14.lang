@@ -1,2 +1,3 @@
+let Just = \ x . Just# x in
 let value = Just 10 in value
 

@@ -1,1 +1,3 @@
+let Address = \ x . \ y . Address# x y in
+let Person = \ x . \ y . Person# x y in
 let john = Person "John Doe" (Address "123 Main St" 5551234) in john

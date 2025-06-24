@@ -1,1 +1,3 @@
+let Just = \ x . Just# x in
+let Success = \ x . Success# x in
 let res = Just (Success 100) in res
