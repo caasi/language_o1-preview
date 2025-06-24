@@ -366,7 +366,7 @@ Token lexer_get_next_token(Lexer *lexer)
 
 int is_identifier_char(char c)
 {
-    return isalnum(c) || c == '_';
+    return isalnum(c) || c == '_' || c == '#';
 }
 
 Token lexer_get_identifier(Lexer *lexer)

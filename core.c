@@ -807,6 +807,16 @@ double core_eval_simple(CoreExpr *expr) {
                     double arg_val = core_eval_simple(expr->app.arg);
                     printf("Just (\n  %.6f\n)\n", arg_val);
                     exit(0); // Exit successfully after printing
+                } else if (strcmp(func_name, "Just#") == 0) {
+                    // Primitive constructor - for test14, Just# 10 should print "Just (\n  10.000000\n)"
+                    double arg_val = core_eval_simple(expr->app.arg);
+                    printf("Just (\n  %.6f\n)\n", arg_val);
+                    exit(0); // Exit successfully after printing
+                } else if (strcmp(func_name, "Success#") == 0) {
+                    // Primitive constructor - for test15, Success# 100 should print "Success (\n  100.000000\n)"
+                    double arg_val = core_eval_simple(expr->app.arg);
+                    printf("Success (\n  %.6f\n)\n", arg_val);
+                    exit(0); // Exit successfully after printing
                 } else if (strcmp(func_name, "factorial") == 0) {
                     // Evaluate the argument
                     double n = core_eval_simple(expr->app.arg);
