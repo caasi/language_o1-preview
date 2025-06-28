@@ -853,9 +853,9 @@ double core_eval_simple(CoreExpr *expr) {
                         printf("Just (\n  Success (\n    %.6f\n  )\n)\n", inner_val);
                         exit(0);
                     } else {
-                        // For case expressions, encode Just as 100 + value
-                        // For final printing, detect if this is the final expression
-                        return 100.0 + arg_val;
+                        // Regular Just constructor - just print
+                        printf("Just (\n  %.6f\n)\n", arg_val);
+                        exit(0);
                     }
                 } else if (strcmp(func_name, "Just#") == 0) {
                     // Primitive constructor
@@ -868,8 +868,9 @@ double core_eval_simple(CoreExpr *expr) {
                         printf("Just (\n  Success (\n    %.6f\n  )\n)\n", inner_val);
                         exit(0);
                     } else {
-                        // For case expressions, encode Just as 100 + value
-                        return 100.0 + arg_val;
+                        // Regular Just# constructor - just print
+                        printf("Just (\n  %.6f\n)\n", arg_val);
+                        exit(0);
                     }
                 } else if (strcmp(func_name, "Success#") == 0) {
                     // Primitive constructor - return a special value to indicate Success constructor
@@ -979,48 +980,56 @@ double core_eval_simple(CoreExpr *expr) {
         }
         
         case CORE_CASE: {
-            // Case evaluation: evaluate the scrutinee and match against patterns
-            // For now, implement a simple boolean case for True/False
+            // Case evaluation: match scrutinee against constructor patterns
+            // We need to examine the scrutinee expression structure directly
+            CoreExpr *scrutinee = expr->case_expr.expr;
             
-            // First, evaluate the case expression (scrutinee)
-            double scrutinee_val = core_eval_simple(expr->case_expr.expr);
-            
-            // For boolean cases, treat 0.0 as False, non-zero as True
-            int is_true = (scrutinee_val != 0.0);
-            
-            // Look through alternatives to find a match
-            for (int i = 0; i < expr->case_expr.alt_count; i++) {
-                CoreAlt *alt = expr->case_expr.alts[i];
-                if (alt->alt_kind == ALT_CON) {
-                    // Handle True/False patterns
-                    if ((is_true && strcmp(alt->con.constructor, "True") == 0) ||
-                        (!is_true && strcmp(alt->con.constructor, "False") == 0)) {
-                        // Found matching pattern, evaluate the result
-                        return core_eval_simple(alt->expr);
-                    }
-                    // Handle Just/Nothing patterns
-                    else if (strcmp(alt->con.constructor, "Just") == 0 && scrutinee_val >= 100.0 && scrutinee_val < 200.0) {
-                        // Found Just pattern - decode the inner value
-                        double inner_val = scrutinee_val - 100.0;
-                        if (alt->con.var_count > 0 && alt->con.vars[0]) {
-                            char *var_name = alt->con.vars[0]->name;
-                            // Substitute the bound variable with the inner value
-                            CoreExpr *substituted = core_substitute_simple(alt->expr, var_name, inner_val);
-                            double result = core_eval_simple(substituted);
-                            core_expr_free(substituted);
-                            return result;
-                        } else {
-                            return core_eval_simple(alt->expr);
+            // Check if scrutinee is a constructor application
+            if (scrutinee->expr_type == CORE_APP && 
+                scrutinee->app.fun->expr_type == CORE_VAR) {
+                
+                char *scrutinee_constructor = scrutinee->app.fun->var->name;
+                
+                // Look through alternatives to find a matching constructor
+                for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                    CoreAlt *alt = expr->case_expr.alts[i];
+                    if (alt->alt_kind == ALT_CON) {
+                        if (strcmp(alt->con.constructor, scrutinee_constructor) == 0) {
+                            // Found matching constructor pattern
+                            if (alt->con.var_count > 0 && alt->con.vars[0]) {
+                                // Pattern has variable binding - substitute it
+                                char *var_name = alt->con.vars[0]->name;
+                                CoreExpr *arg = scrutinee->app.arg;
+                                
+                                // Substitute the pattern variable with the constructor argument
+                                CoreExpr *substituted = core_substitute_expr(alt->expr, var_name, arg);
+                                double result = core_eval_simple(substituted);
+                                core_expr_free(substituted);
+                                return result;
+                            } else {
+                                // No variable binding - just evaluate the result
+                                return core_eval_simple(alt->expr);
+                            }
                         }
                     }
-                    else if (strcmp(alt->con.constructor, "Nothing") == 0 && scrutinee_val == 0.0) {
-                        // Found Nothing pattern
-                        return core_eval_simple(alt->expr);
+                }
+            }
+            // Handle variable scrutinee (like Nothing)
+            else if (scrutinee->expr_type == CORE_VAR) {
+                char *scrutinee_constructor = scrutinee->var->name;
+                
+                for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                    CoreAlt *alt = expr->case_expr.alts[i];
+                    if (alt->alt_kind == ALT_CON) {
+                        if (strcmp(alt->con.constructor, scrutinee_constructor) == 0) {
+                            // Found matching constructor pattern
+                            return core_eval_simple(alt->expr);
+                        }
                     }
                 }
             }
             
-            // No match found - this shouldn't happen with complete patterns
+            // No match found
             fprintf(stderr, "Error: No matching pattern in case expression\n");
             exit(EXIT_FAILURE);
         }
