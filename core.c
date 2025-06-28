@@ -747,8 +747,9 @@ double core_eval_simple(CoreExpr *expr) {
                     } else if (strcmp(op_name, "==") == 0) {
                         return (left == right) ? 1.0 : 0.0;
                     } else if (strcmp(op_name, "Point#") == 0) {
-                        // Point# x y constructor - just return a numeric representation
-                        return left + right; // Simple combination for now
+                        // Point# x y constructor - print Point format
+                        printf("Point (\n  %.6f,\n  %.6f\n)\n", left, right);
+                        exit(0);
                     } else if (strcmp(op_name, "Address#") == 0) {
                         // Address# constructor
                         return left + right; // Simple combination for now
