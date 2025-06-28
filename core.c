@@ -853,9 +853,9 @@ double core_eval_simple(CoreExpr *expr) {
                         printf("Just (\n  Success (\n    %.6f\n  )\n)\n", inner_val);
                         exit(0);
                     } else {
-                        // Regular Just constructor
-                        printf("Just (\n  %.6f\n)\n", arg_val);
-                        exit(0);
+                        // For case expressions, encode Just as 100 + value
+                        // For final printing, detect if this is the final expression
+                        return 100.0 + arg_val;
                     }
                 } else if (strcmp(func_name, "Just#") == 0) {
                     // Primitive constructor
@@ -868,9 +868,8 @@ double core_eval_simple(CoreExpr *expr) {
                         printf("Just (\n  Success (\n    %.6f\n  )\n)\n", inner_val);
                         exit(0);
                     } else {
-                        // Regular Just# constructor
-                        printf("Just (\n  %.6f\n)\n", arg_val);
-                        exit(0);
+                        // For case expressions, encode Just as 100 + value
+                        return 100.0 + arg_val;
                     }
                 } else if (strcmp(func_name, "Success#") == 0) {
                     // Primitive constructor - return a special value to indicate Success constructor
@@ -993,9 +992,29 @@ double core_eval_simple(CoreExpr *expr) {
             for (int i = 0; i < expr->case_expr.alt_count; i++) {
                 CoreAlt *alt = expr->case_expr.alts[i];
                 if (alt->alt_kind == ALT_CON) {
+                    // Handle True/False patterns
                     if ((is_true && strcmp(alt->con.constructor, "True") == 0) ||
                         (!is_true && strcmp(alt->con.constructor, "False") == 0)) {
                         // Found matching pattern, evaluate the result
+                        return core_eval_simple(alt->expr);
+                    }
+                    // Handle Just/Nothing patterns
+                    else if (strcmp(alt->con.constructor, "Just") == 0 && scrutinee_val >= 100.0 && scrutinee_val < 200.0) {
+                        // Found Just pattern - decode the inner value
+                        double inner_val = scrutinee_val - 100.0;
+                        if (alt->con.var_count > 0 && alt->con.vars[0]) {
+                            char *var_name = alt->con.vars[0]->name;
+                            // Substitute the bound variable with the inner value
+                            CoreExpr *substituted = core_substitute_simple(alt->expr, var_name, inner_val);
+                            double result = core_eval_simple(substituted);
+                            core_expr_free(substituted);
+                            return result;
+                        } else {
+                            return core_eval_simple(alt->expr);
+                        }
+                    }
+                    else if (strcmp(alt->con.constructor, "Nothing") == 0 && scrutinee_val == 0.0) {
+                        // Found Nothing pattern
                         return core_eval_simple(alt->expr);
                     }
                 }

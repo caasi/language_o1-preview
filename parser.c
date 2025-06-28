@@ -1400,14 +1400,31 @@ CoreExpr *parse_core_case(Parser *parser) {
     if (parser->current_token.type == TOKEN_IDENTIFIER) {
         char *constructor = strdup(parser->current_token.text);
         parser_eat(parser, TOKEN_IDENTIFIER);
+        
+        // Handle variable binding in pattern (e.g., "Just n")
+        char *var_name = NULL;
+        if (parser->current_token.type == TOKEN_IDENTIFIER) {
+            var_name = strdup(parser->current_token.text);
+            parser_eat(parser, TOKEN_IDENTIFIER);
+        }
+        
         parser_eat(parser, TOKEN_ARROW);
         CoreExpr *result = parse_core_expression(parser);
         
-        alts[alt_count++] = core_alt_create_con(constructor, NULL, 0, result);
+        // Create variable if we have binding
+        CoreVar **vars = NULL;
+        int var_count = 0;
+        if (var_name) {
+            vars = (CoreVar **)malloc(sizeof(CoreVar *));
+            vars[0] = core_var_create(var_name, NULL, 0);
+            var_count = 1;
+        }
         
-        // Check for semicolon and second alternative
-        if (parser->current_token.type == TOKEN_SEMICOLON) {
-            parser_eat(parser, TOKEN_SEMICOLON);
+        alts[alt_count++] = core_alt_create_con(constructor, vars, var_count, result);
+        
+        // Check for pipe and second alternative
+        if (parser->current_token.type == TOKEN_PIPE) {
+            parser_eat(parser, TOKEN_PIPE);
             
             if (parser->current_token.type == TOKEN_IDENTIFIER) {
                 char *constructor2 = strdup(parser->current_token.text);
