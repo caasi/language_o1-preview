@@ -912,7 +912,7 @@ double core_eval_simple(CoreExpr *expr) {
                 }
             }
             
-            fprintf(stderr, "Error: Cannot evaluate variable function application '%s'\n", 
+            fprintf(stderr, "Error: Undefined constructor '%s'\n", 
                     expr->app.fun->var->name);
             exit(EXIT_FAILURE);
             
