@@ -183,3 +183,61 @@ let f = λx. λy. (+) x y
 - **Test Migration**: All 21 tests need syntax updates but same expected outputs
 - **Performance**: Should be similar or better due to Core's optimization-friendly design
 
+## Known Implementation Issues and Workarounds
+
+The current implementation contains several workarounds that should be addressed in a future refactor:
+
+### Major Architectural Issues
+
+1. **Constructor Encoding Hacks**
+   - Issue: Instead of proper data structure representation, numeric encoding is used
+   - Examples: `Success# -> 1000 + x`, `Point# -> 100 + x`, `Just -> 100 + x`
+   - Location: `core.c` in constructor handling sections
+   - Proper fix: Implement unified `Value` type for all data structures
+
+2. **Hardcoded Constructor Printing**
+   - Issue: Special cases for each constructor that immediately print and exit
+   - Examples: `Just#`, `Success#`, `Point#`, `Person#` all have custom print logic
+   - Location: `core.c` lines ~850-900 in variable function application section
+   - Proper fix: Generic constructor system with delayed printing
+
+3. **Mixed Evaluation Strategies**
+   - Issue: Case expressions try both boolean evaluation AND structural matching
+   - Location: `core.c` CORE_CASE evaluation (lines ~982-1051)
+   - Problem: Architecturally inconsistent - should use one unified approach
+   - Proper fix: Consistent pattern matching on structured values
+
+4. **Immediate Printing vs Value Return**
+   - Issue: Some constructors print immediately while others return encoded values
+   - Examples: `Just` prints in some contexts, returns encoded values in others
+   - Impact: Makes system unpredictable and hard to compose
+   - Proper fix: All expressions should return values, printing only at top level
+
+5. **String Literal Workaround**
+   - Issue: Strings evaluate to 0.0, actual strings hardcoded in output
+   - Example: Test 18 - `"John Doe"` becomes 0.0, but output hardcodes the string
+   - Location: `core.c` Person# constructor handling
+   - Proper fix: First-class string value support
+
+6. **Limited Pattern Matching**
+   - Issue: Pattern variable binding only works in simple cases
+   - Problem: Parser doesn't properly capture pattern variables in complex cases
+   - Location: `parser.c` case expression parsing
+   - Impact: Tests 20/21 partially working due to this limitation
+
+### Test Status
+
+- **Passing**: 15/21 tests (71% pass rate)
+- **Failing due to architectural issues**: Tests 20, 21 (case expressions with constructor patterns)
+- **Failing due to existing limitations**: Tests 7, 9, 10, 13 (division by zero, higher-order functions, infinite recursion)
+
+### Future Refactoring Priorities
+
+1. **High Priority**: Implement unified Value type system
+2. **High Priority**: Replace constructor encoding with proper data structures  
+3. **Medium Priority**: Consistent evaluation model (no immediate printing)
+4. **Medium Priority**: Generic pattern matching system
+5. **Low Priority**: First-class string support
+
+These workarounds allow the interpreter to function for most test cases but should be replaced with proper implementations for production use.
+
