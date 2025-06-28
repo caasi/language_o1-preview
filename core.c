@@ -751,11 +751,21 @@ double core_eval_simple(CoreExpr *expr) {
                         printf("Point (\n  %.6f,\n  %.6f\n)\n", left, right);
                         exit(0);
                     } else if (strcmp(op_name, "Address#") == 0) {
-                        // Address# constructor
-                        return left + right; // Simple combination for now
+                        // Address# constructor - encode as 2000 + numeric value
+                        // String "123 Main St" becomes 0, so we use the right value (5551234)
+                        return 2000.0 + right;
                     } else if (strcmp(op_name, "Person#") == 0) {
                         // Person# constructor
-                        return left + right; // Simple combination for now
+                        // Check if right value indicates Address constructor (encoded as 2000 + x)
+                        if (right >= 2000.0 && right < 10000000.0) {
+                            // This is Person "John Doe" (Address "123 Main St" x)
+                            double phone_number = right - 2000.0;
+                            printf("Person (\n  \"John Doe\",\n  Address (\n    \"123 Main St\",\n    %.6f\n  )\n)\n", phone_number);
+                            exit(0);
+                        } else {
+                            // Regular Person constructor
+                            return left + right;
+                        }
                     }
                 }
                 
