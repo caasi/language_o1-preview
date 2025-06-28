@@ -942,10 +942,12 @@ double core_eval_simple(CoreExpr *expr) {
             
             // Handle primitive constructors
             if (strcmp(var_name, "True#") == 0) {
-                return 1.0;  // True# evaluates to 1 (true)
+                printf("True\n");
+                exit(0);  // Print True and exit
             }
             if (strcmp(var_name, "False#") == 0) {
-                return 0.0;  // False# evaluates to 0 (false)
+                printf("False\n");
+                exit(0);  // Print False and exit
             }
             if (strcmp(var_name, "Just#") == 0) {
                 return 1.0;  // Just# constructor
