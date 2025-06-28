@@ -1422,9 +1422,10 @@ CoreExpr *parse_core_case(Parser *parser) {
         
         alts[alt_count++] = core_alt_create_con(constructor, vars, var_count, result);
         
-        // Check for pipe and second alternative
-        if (parser->current_token.type == TOKEN_PIPE) {
-            parser_eat(parser, TOKEN_PIPE);
+        // Check for pipe or semicolon and second alternative
+        if (parser->current_token.type == TOKEN_PIPE || parser->current_token.type == TOKEN_SEMICOLON) {
+            TokenType separator = parser->current_token.type;
+            parser_eat(parser, separator);
             
             if (parser->current_token.type == TOKEN_IDENTIFIER) {
                 char *constructor2 = strdup(parser->current_token.text);

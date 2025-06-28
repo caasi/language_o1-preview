@@ -981,9 +981,25 @@ double core_eval_simple(CoreExpr *expr) {
         
         case CORE_CASE: {
             // Case evaluation: match scrutinee against constructor patterns
-            // We need to examine the scrutinee expression structure directly
             CoreExpr *scrutinee = expr->case_expr.expr;
             
+            // First try to evaluate the scrutinee to see if it's a boolean result
+            double scrutinee_val = core_eval_simple(scrutinee);
+            
+            // Check for True/False boolean patterns
+            int is_true = (scrutinee_val != 0.0);
+            for (int i = 0; i < expr->case_expr.alt_count; i++) {
+                CoreAlt *alt = expr->case_expr.alts[i];
+                if (alt->alt_kind == ALT_CON) {
+                    if ((is_true && strcmp(alt->con.constructor, "True") == 0) ||
+                        (!is_true && strcmp(alt->con.constructor, "False") == 0)) {
+                        // Found matching boolean pattern
+                        return core_eval_simple(alt->expr);
+                    }
+                }
+            }
+            
+            // If no boolean match, try structural matching
             // Check if scrutinee is a constructor application
             if (scrutinee->expr_type == CORE_APP && 
                 scrutinee->app.fun->expr_type == CORE_VAR) {
