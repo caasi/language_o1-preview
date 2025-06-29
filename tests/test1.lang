@@ -1,1 +1,20 @@
-let add = \ x . \ y . (+) x y in add 2 3
+{-
+   TEST 1: Basic Lambda Functions and Currying
+   ==========================================
+   
+   Testing intention:
+   - Verify lambda function definition with explicit syntax (\ x . body)
+   - Test function currying (two-argument function as nested lambdas)
+   - Validate function application with correct argument passing
+   - Test basic arithmetic operator usage in functional style
+   
+   This test ensures:
+   1. Lambda syntax parsing works correctly
+   2. Curried functions can be defined and called
+   3. Built-in operators like (+) work as functions
+   4. Function application evaluates in correct order
+   
+   Expected result: 5 (2 + 3)
+-}
+
+let add = \ x . \ y . (+) x y in add 2 3 -- Two-argument addition via currying

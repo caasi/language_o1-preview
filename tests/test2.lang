@@ -1,1 +1,20 @@
-let x = 10 in (*) x 2
+{-
+   TEST 2: Let Bindings and Infix Operators as Functions
+   =====================================================
+   
+   Testing intention:
+   - Verify let binding variable definition and scoping
+   - Test multiplication operator (*) used as a function
+   - Validate partial application of binary operators
+   - Ensure variable substitution in expressions
+   
+   This test ensures:
+   1. Let bindings work correctly
+   2. Infix operators can be used in function position
+   3. Variable references resolve to bound values
+   4. Order of operations with function application
+   
+   Expected result: 20 (10 * 2)
+-}
+
+let x = 10 in (*) x 2 -- Multiply bound variable by constant

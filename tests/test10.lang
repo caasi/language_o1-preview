@@ -1,1 +1,22 @@
-let infinite_recursion = \n. infinite_recursion n in infinite_recursion 1
+{-
+   TEST 10: Infinite Recursion and Stack Overflow Detection
+   =======================================================
+   
+   Testing intention:
+   - Test detection of infinite recursive calls
+   - Verify stack overflow protection mechanisms
+   - Test that interpreter doesn't crash on infinite loops
+   - Validate error handling for runaway recursion
+   
+   This test ensures:
+   1. Infinite recursion is detected before stack exhaustion
+   2. Appropriate error messages are generated for stack overflow
+   3. Interpreter remains stable after detecting infinite recursion
+   4. Stack depth limits are enforced
+   5. Error recovery allows continuation after recursion errors
+   
+   Expected result: Error: Stack overflow due to infinite recursion
+-}
+
+let infinite_recursion = \n. infinite_recursion n in infinite_recursion 1 
+-- This function calls itself infinitely with same argument

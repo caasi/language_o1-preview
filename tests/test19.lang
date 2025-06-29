@@ -1,1 +1,21 @@
-let res = UnknownConstructor 5 in res
+{-
+   TEST 19: Undefined Constructor Error Handling
+   ============================================
+   
+   Testing intention:
+   - Test error handling for undefined/unknown constructors
+   - Verify that undefined identifiers are caught at evaluation time
+   - Test error messages for unknown constructor references
+   - Validate that interpreter handles undefined symbols gracefully
+   
+   This test ensures:
+   1. Undefined constructors trigger appropriate errors
+   2. Error messages clearly identify the unknown constructor
+   3. Interpreter doesn't crash on undefined references
+   4. Symbol table lookup failures are handled properly
+   5. Error reporting provides helpful information for debugging
+   
+   Expected result: Error: Undefined constructor 'UnknownConstructor'
+-}
+
+let res = UnknownConstructor 5 in res -- Reference to undefined constructor

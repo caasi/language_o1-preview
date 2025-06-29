@@ -1,3 +1,23 @@
-let add = \x. \y. (+) x y in 
-let mul = \x. \y. (*) x y in  
-let result = add 2 3 in mul result 4
+{-
+   TEST 4: Multiple Let Bindings and Function Composition
+   =====================================================
+   
+   Testing intention:
+   - Test multiple sequential let bindings
+   - Verify function definitions using compact lambda syntax (\x. body)
+   - Test intermediate result passing between functions
+   - Validate complex expression evaluation with multiple function calls
+   
+   This test ensures:
+   1. Multiple let bindings in sequence work correctly
+   2. Compact lambda syntax (without spaces) parses properly
+   3. Functions can be stored in variables and called later
+   4. Results from one function can be passed to another
+   5. Complex evaluation order is handled correctly
+   
+   Expected result: 20 ((2 + 3) * 4 = 5 * 4)
+-}
+
+let add = \x. \y. (+) x y in  -- Define addition function
+let mul = \x. \y. (*) x y in  -- Define multiplication function
+let result = add 2 3 in mul result 4 -- Chain operations: (2+3)*4

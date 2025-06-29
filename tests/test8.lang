@@ -1,1 +1,21 @@
-let get_magic_number = 42 in get_magic_number
+{-
+   TEST 8: Constants and Simple Variable Binding
+   ============================================
+   
+   Testing intention:
+   - Test binding of constant values to variables
+   - Verify simple variable reference without computation
+   - Test that let bindings work with direct values (not functions)
+   - Validate basic variable substitution
+   
+   This test ensures:
+   1. Constants can be bound to variables
+   2. Variable references resolve to bound values
+   3. Let expressions work with non-function values
+   4. Simple expressions evaluate correctly
+   5. Basic interpreter functionality is working
+   
+   Expected result: 42
+-}
+
+let get_magic_number = 42 in get_magic_number -- Simple constant binding and reference

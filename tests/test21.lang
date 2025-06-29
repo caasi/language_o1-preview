@@ -1,7 +1,27 @@
-let Just = \ x . Just# x in
-let Nothing = Nothing# in
-let describe = \ m . case m of
-  Just n -> n
-| Nothing -> 0
+{-
+   TEST 21: Case Expressions with Constructor Patterns (Nothing case)
+   =================================================================
+   
+   Testing intention:
+   - Test case expressions with nullary constructors (Nothing)
+   - Verify pattern matching selects correct branch for different constructors
+   - Test that case expressions handle constructors without arguments
+   - Validate exhaustive pattern matching behavior
+   
+   This test ensures:
+   1. Case expressions match nullary constructors correctly
+   2. Different constructors of same ADT are distinguished properly
+   3. Pattern matching chooses correct branch based on constructor type
+   4. Nullary constructors (no arguments) work in patterns
+   5. Default/fallback branches execute when appropriate
+   
+   Expected result: 0 (Nothing case returns default value)
+-}
+
+let Just = \ x . Just# x in      -- Maybe constructor for values
+let Nothing = Nothing# in        -- Maybe constructor for no value (nullary)
+let describe = \ m . case m of   -- Pattern match on Maybe
+  Just n -> n                    -- Extract value from Just  
+| Nothing -> 0                   -- Default value for Nothing
 in
-describe Nothing
+describe Nothing -- Should match Nothing pattern and return 0

@@ -1,1 +1,21 @@
-let multiply = \x. \y. (*) x y in multiply 5
+{-
+   TEST 9: Partial Application and Arity Checking
+   =============================================
+   
+   Testing intention:
+   - Test partial application of multi-argument functions
+   - Verify arity checking for function calls
+   - Test error handling when function expects more arguments
+   - Validate function application error messages
+   
+   This test ensures:
+   1. Partial application is detected properly
+   2. Error messages indicate expected vs actual argument count
+   3. Function arity is tracked correctly
+   4. Runtime errors are generated for incomplete applications
+   5. Function application validation works
+   
+   Expected result: Error: Function 'multiply' expects 2 arguments but got 1
+-}
+
+let multiply = \x. \y. (*) x y in multiply 5 -- Partial application should cause error

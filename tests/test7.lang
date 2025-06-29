@@ -1,3 +1,23 @@
-let numerator = 10 in
-let denominator = (-) 5 5 in
-    (/) numerator denominator
+{-
+   TEST 7: Division by Zero Error Handling
+   =====================================
+   
+   Testing intention:
+   - Test runtime error detection for division by zero
+   - Verify error messages are properly generated
+   - Test that computation leading to zero divisor is handled
+   - Validate error propagation in arithmetic operations
+   
+   This test ensures:
+   1. Division by zero is detected at runtime
+   2. Appropriate error messages are generated
+   3. Computed zero values (not just literal 0) trigger errors
+   4. Error handling doesn't crash the interpreter
+   5. Mathematical edge cases are properly handled
+   
+   Expected result: Error: Division by zero
+-}
+
+let numerator = 10 in      -- Valid dividend
+let denominator = (-) 5 5 in  -- Computed zero: 5 - 5 = 0
+    (/) numerator denominator  -- Should trigger division by zero error

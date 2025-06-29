@@ -1,3 +1,23 @@
-let Just = \ x . Just# x in
-let Success = \ x . Success# x in
-let res = Just (Success 100) in res
+{-
+   TEST 15: Nested Constructor Applications and ADT Composition
+   ==========================================================
+   
+   Testing intention:
+   - Test constructor functions with arguments
+   - Verify nested constructor applications (constructor of constructor)
+   - Test ADT composition and value wrapping
+   - Validate complex data structure creation
+   
+   This test ensures:
+   1. Constructor functions can take arguments
+   2. Constructors can be nested (Just containing Success)
+   3. ADT values can be composed together
+   4. Constructor application works with complex expressions
+   5. Nested data structures print correctly
+   
+   Expected result: Just (Success (100))
+-}
+
+let Just = \ x . Just# x in      -- Maybe type constructor
+let Success = \ x . Success# x in -- Result type constructor  
+let res = Just (Success 100) in res -- Nested: Maybe (Result Int)

@@ -1,7 +1,27 @@
-let Just = \ x . Just# x in
-let Nothing = Nothing# in
-let describe = \ m . case m of
-  Just n -> n
-| Nothing -> 0
+{-
+   TEST 20: Case Expressions with Constructor Patterns (Just case)
+   =============================================================
+   
+   Testing intention:
+   - Test case expressions with ADT constructor patterns
+   - Verify pattern matching on constructed values
+   - Test variable binding in constructor patterns (Just n -> n)
+   - Validate that correct branch is chosen based on constructor
+   
+   This test ensures:
+   1. Case expressions can match constructor patterns
+   2. Pattern variables (n in Just n) bind correctly to constructor arguments
+   3. Constructor-based pattern matching works correctly
+   4. Case expressions return values from matched branches
+   5. ADT pattern matching integrates with function definitions
+   
+   Expected result: 10 (extracting value from Just 10)
+-}
+
+let Just = \ x . Just# x in      -- Maybe constructor for values
+let Nothing = Nothing# in        -- Maybe constructor for no value
+let describe = \ m . case m of   -- Pattern match on Maybe
+  Just n -> n                    -- Extract value from Just
+| Nothing -> 0                   -- Default value for Nothing
 in
-describe (Just 10)
+describe (Just 10) -- Should match Just pattern and return 10

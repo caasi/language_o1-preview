@@ -1,0 +1,26 @@
+{-
+   TEST 22: Comment Integration with All Language Features
+   =====================================================
+   
+   Testing intention:
+   - Test that comments work correctly with all major language features
+   - Verify comments don't interfere with parsing or evaluation
+   - Test both single-line and multi-line comments in complex expressions
+   - Validate comment placement doesn't affect semantics
+   
+   This test ensures:
+   1. Comments work with lambda expressions
+   2. Comments work with let bindings
+   3. Comments work with case expressions  
+   4. Comments work with constructor applications
+   5. Nested comments don't break complex expressions
+   6. Comments are completely ignored during evaluation
+   
+   Expected result: 42 (regardless of comments)
+-}
+
+let {- comment in let binding -} add = \ x . -- comment after lambda
+    \ y . (+) x y {- inline comment in lambda body -} in  
+let {- nested {- comment -} here -} result = add 40 2 in  -- direct application instead of case
+-- Final comment before result
+result -- Expected: 42

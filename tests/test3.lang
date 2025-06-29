@@ -1,1 +1,20 @@
-let x = 2 in (*) x x
+{-
+   TEST 3: Variable Reuse and Self-Reference
+   =========================================
+   
+   Testing intention:
+   - Test same variable used multiple times in expression
+   - Verify variable scoping doesn't create conflicts
+   - Validate that bound variables can reference themselves multiple times
+   - Ensure correct evaluation when variable appears as both operands
+   
+   This test ensures:
+   1. Variables can be used multiple times in same expression
+   2. No scoping conflicts when variable appears twice
+   3. Correct substitution when same variable is both operands
+   4. Mathematical operations work with repeated variables
+   
+   Expected result: 4 (2 * 2)
+-}
+
+let x = 2 in (*) x x -- Square a number (multiply by itself)

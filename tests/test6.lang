@@ -1,2 +1,23 @@
-let x = 5 in
-    (+) (let x = (+) x 1 in (*) x x) x
+{-
+   TEST 6: Nested Let Bindings and Variable Shadowing
+   =================================================
+   
+   Testing intention:
+   - Test nested let expressions with variable shadowing
+   - Verify inner let bindings can shadow outer variables
+   - Test that outer variables remain accessible after inner scope
+   - Validate complex expression evaluation with multiple scopes
+   
+   This test ensures:
+   1. Inner let bindings can redefine variables from outer scope
+   2. Variable shadowing works correctly (inner x shadows outer x)
+   3. Outer variables are restored after inner scope ends
+   4. Complex nested expressions evaluate in correct order
+   5. Scope resolution follows lexical scoping rules
+   
+   Expected result: 41 ((5+1)² + 5 = 6² + 5 = 36 + 5)
+-}
+
+let x = 5 in  -- Outer scope: x = 5
+    (+) (let x = (+) x 1 in (*) x x) x  -- Inner scope shadows x, then use outer x
+    -- Breakdown: inner x = 5+1 = 6, then 6*6 = 36, then 36 + outer x (5) = 41
