@@ -1,0 +1,47 @@
+{-
+   Comment Syntax Showcase
+   =====================
+   
+   This file demonstrates all supported comment syntax and our design intentions.
+   
+   DESIGN INTENTIONS:
+   ==================
+   
+   1. GHC Haskell Compatibility
+      - Use exact same comment syntax as GHC Haskell
+      - Support nested multi-line comments
+      - Make language feel familiar to Haskell developers
+   
+   2. Documentation Support  
+      - Enable clear code documentation
+      - Support hierarchical comment structure
+      - Allow detailed explanations within code
+   
+   3. Development Workflow
+      - Easy code commenting/uncommenting during development
+      - Safe way to disable code blocks temporarily
+      - No conflicts when commenting out already-commented code
+   
+   4. Clean Lexical Analysis
+      - Comments completely removed during tokenization
+      - No impact on parsing or evaluation performance
+      - Proper handling of comment edge cases
+-}
+
+-- SINGLE-LINE COMMENTS:
+-- ====================
+
+let value1 = 10 in    -- Comments can follow code on same line
+-- Comments can also be on their own lines
+  value1              -- Expected result: 10
+end
+
+{- MULTI-LINE COMMENTS:
+   ====================
+   
+   Multi-line comments are perfect for:
+   - Long explanations that span multiple lines
+   - ASCII art and formatting
+   - Temporarily disabling large code blocks
+   - Documentation headers (like this one)
+-}

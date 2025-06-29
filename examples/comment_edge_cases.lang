@@ -1,0 +1,45 @@
+{-
+   Comment Edge Cases Test
+   ======================
+   
+   This file tests various edge cases and tricky scenarios for comment parsing.
+   
+   TESTING INTENTIONS:
+   - Ensure robust comment parsing in complex situations
+   - Verify comments don't interfere with string literals
+   - Test comment boundaries and special characters
+   - Validate proper nesting level tracking
+-}
+
+-- Test 1: Comments with operators that might confuse the lexer
+let test1 = 42 in  -- This comment has - and + and * and / operators
+  test1            -- Should still parse correctly
+end
+
+{- Test 2: Comments containing string-like content
+   This comment contains "quotes" and 'apostrophes'
+   And even {- what looks like nested comment syntax -}
+   All of this should be ignored completely
+-}
+
+{-
+   Test 3: Deeply nested comments to stress-test nesting logic
+   
+   {- Level 1
+      {- Level 2  
+         {- Level 3
+            {- Level 4
+               This is getting deep!
+            -}
+            Back to level 3
+         -}
+         Back to level 2
+      -}
+      Back to level 1
+   -}
+   
+   The nesting counter must properly track all these levels.
+-}
+
+-- Test 4: Comment at very end of file with no newline
+let final_result = 99 in final_result end -- Final comment

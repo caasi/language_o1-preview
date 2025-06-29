@@ -1,12 +1,28 @@
-{- 
-   Multi-line comment at the start
-   Can span multiple lines
+{-
+   GHC-Style Comments Test
+   ======================
+   
+   This file tests the GHC-style comment syntax implementation.
+   
+   Intentions:
+   1. Provide clear documentation within code
+   2. Support both single-line and multi-line comments
+   3. Allow comments to be placed anywhere in the code
+   4. Enable code commenting for debugging and development
+   
+   Expected behavior:
+   - All comments should be completely ignored by the lexer
+   - Code execution should work exactly as if comments weren't there
+   - This expression should evaluate to 5 (just the variable x)
 -}
 
-let x = 5 in  -- Single line comment
-  {- Another multi-line comment -}
-  x + 2  -- Result should be 7
+let x = 5 in  -- Single-line comments start with '--' and go to end of line
+  {- Multi-line comments use {- ... -} and can span multiple lines -}
+  x  -- We return just x (value 5), not x + 2, to test comment parsing
 end
 
--- Comments can appear anywhere
--- Even at the end of the file
+-- Single-line comments can appear at the end of files
+-- They are useful for:
+-- - Explaining code behavior
+-- - Temporarily disabling code
+-- - Adding development notes

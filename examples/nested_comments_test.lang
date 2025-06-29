@@ -1,12 +1,39 @@
-{- 
-   Outer comment starts here
-   {- This is a nested comment 
-      {- Even deeper nesting -}
+{-
+   Nested Comments Test
+   ===================
+   
+   This tests GHC-style nested multi-line comments.
+   
+   Intention: Support proper nesting of multi-line comments,
+   which is a key feature of GHC Haskell comments.
+   
+   {- 
+      First level of nesting - comments can contain other comments
+      {- 
+         Second level of nesting - this should work too
+         {- 
+            Third level - even deeper nesting should be handled correctly
+         -}
+         Back to second level
+      -}
+      Back to first level
    -}
-   Back to outer comment
+   
+   Why nested comments matter:
+   - Allows commenting out large blocks of code that already contain comments
+   - Enables hierarchical documentation structure
+   - Prevents issues when temporarily disabling commented code
 -}
 
--- Now the actual code
+-- The actual executable code starts here
+-- Expected result: 15
 let result = 15 in
   result
 end
+
+{-
+   Post-code comment block
+   
+   This demonstrates that multi-line comments work at the end of files too.
+   The nesting counter should properly track all opening/closing pairs.
+-}
