@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
 
     if (print_ast) {
         // Print AST instead of evaluating
-        printf("Core AST:\n");
         core_expr_print(core_expr, 0);
     } else {
         // Evaluate the Core expression (simple evaluator for now)
