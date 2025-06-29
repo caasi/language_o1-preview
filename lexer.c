@@ -131,6 +131,51 @@ void lexer_skip_whitespace(Lexer *lexer)
     }
 }
 
+void lexer_skip_single_line_comment(Lexer *lexer)
+{
+    // Skip the '--' characters
+    lexer_advance(lexer); // Skip first '-'
+    lexer_advance(lexer); // Skip second '-'
+    
+    // Skip until end of line or end of input
+    while (lexer->current_char != '\0' && lexer->current_char != '\n')
+    {
+        lexer_advance(lexer);
+    }
+}
+
+void lexer_skip_multi_line_comment(Lexer *lexer)
+{
+    // Skip the '{-' characters
+    lexer_advance(lexer); // Skip '{'
+    lexer_advance(lexer); // Skip '-'
+    
+    // Track nesting level for nested comments
+    int nesting_level = 1;
+    
+    while (lexer->current_char != '\0' && nesting_level > 0)
+    {
+        if (lexer->current_char == '{' && lexer_peek(lexer) == '-')
+        {
+            // Found opening of nested comment
+            lexer_advance(lexer); // Skip '{'
+            lexer_advance(lexer); // Skip '-'
+            nesting_level++;
+        }
+        else if (lexer->current_char == '-' && lexer_peek(lexer) == '}')
+        {
+            // Found closing of comment
+            lexer_advance(lexer); // Skip '-'
+            lexer_advance(lexer); // Skip '}'
+            nesting_level--;
+        }
+        else
+        {
+            lexer_advance(lexer);
+        }
+    }
+}
+
 Token lexer_get_number(Lexer *lexer)
 {
     char buffer[64];
@@ -246,11 +291,20 @@ Token lexer_get_next_token(Lexer *lexer)
             return (Token){TOKEN_DOT, 0, NULL};
         }
 
-        // Handle '{' and '}'
+        // Handle '{', '{-', and '}'
         if (lexer->current_char == '{')
         {
-            lexer_advance(lexer);
-            return (Token){TOKEN_LBRACE, 0, NULL};
+            if (lexer->text[lexer->pos + 1] == '-')
+            {
+                // Multi-line comment '{-'
+                lexer_skip_multi_line_comment(lexer);
+                continue; // Skip to next token
+            }
+            else
+            {
+                lexer_advance(lexer);
+                return (Token){TOKEN_LBRACE, 0, NULL};
+            }
         }
         if (lexer->current_char == '}')
         {
@@ -258,7 +312,7 @@ Token lexer_get_next_token(Lexer *lexer)
             return (Token){TOKEN_RBRACE, 0, NULL};
         }
 
-        // Arrow '->'
+        // Handle '-', '--', and '->'
         if (lexer->current_char == '-')
         {
             if (lexer->text[lexer->pos + 1] == '>')
@@ -266,6 +320,12 @@ Token lexer_get_next_token(Lexer *lexer)
                 lexer_advance(lexer); // Skip '-'
                 lexer_advance(lexer); // Skip '>'
                 return (Token){TOKEN_ARROW, 0, NULL};
+            }
+            else if (lexer->text[lexer->pos + 1] == '-')
+            {
+                // Single-line comment '--'
+                lexer_skip_single_line_comment(lexer);
+                continue; // Skip to next token
             }
             else
             {

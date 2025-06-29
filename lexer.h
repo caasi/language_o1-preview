@@ -65,6 +65,8 @@ Lexer lexer_create(const char *text);
 char lexer_peek(Lexer *lexer);
 void lexer_advance(Lexer *lexer);
 void lexer_skip_whitespace(Lexer *lexer);
+void lexer_skip_single_line_comment(Lexer *lexer);
+void lexer_skip_multi_line_comment(Lexer *lexer);
 Token lexer_get_number(Lexer *lexer);
 Token lexer_get_next_token(Lexer *lexer);
 Token lexer_get_identifier(Lexer *lexer);

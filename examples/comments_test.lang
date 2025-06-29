@@ -1,0 +1,12 @@
+{- 
+   Multi-line comment at the start
+   Can span multiple lines
+-}
+
+let x = 5 in  -- Single line comment
+  {- Another multi-line comment -}
+  x + 2  -- Result should be 7
+end
+
+-- Comments can appear anywhere
+-- Even at the end of the file

@@ -1,0 +1,12 @@
+{- 
+   Outer comment starts here
+   {- This is a nested comment 
+      {- Even deeper nesting -}
+   -}
+   Back to outer comment
+-}
+
+-- Now the actual code
+let result = 15 in
+  result
+end
